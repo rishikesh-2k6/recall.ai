@@ -66,39 +66,26 @@ export function useProcessAudio() {
 
       let data: MeetingResult | null = null
 
-      try {
-        const res = await fetch('/api/process-audio', {
-          method: 'POST',
-          body: formData,
-        })
+      const res = await fetch('/api/process-audio', {
+        method: 'POST',
+        body: formData,
+      })
 
-        if (res.ok) {
-          data = await res.json()
-        }
-      } catch {
-        // Backend not available — fall through to demo mode
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}))
+        throw new Error(errorData.error || 'Failed to process audio')
       }
+
+      data = await res.json()
 
       // Step 2: analysing
       advanceStep(2)
-      await new Promise(r => setTimeout(r, STEP_DELAYS[2]))
 
       // Step 3: extracting
       advanceStep(3)
-      await new Promise(r => setTimeout(r, STEP_DELAYS[3]))
 
       // Step 4: saving
       advanceStep(4)
-      await new Promise(r => setTimeout(r, STEP_DELAYS[4]))
-
-      // If no real data, use mock data (demo mode)
-      if (!data) {
-        data = {
-          ...MOCK_MEETING,
-          id: `meeting-${Date.now()}`,
-          name: meetingName === "New Meeting" ? MOCK_MEETING.name : meetingName,
-        }
-      }
 
       // All done
       setSteps(prev => prev.map(s => ({ ...s, state: 'done' as const })))
