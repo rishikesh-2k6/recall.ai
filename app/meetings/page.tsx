@@ -2,8 +2,8 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { motion } from "framer-motion"
-import { Clock, Users, FileText, ChevronRight, Search, Filter, Smile, Frown, HelpCircle } from "lucide-react"
+import { motion, AnimatePresence } from "framer-motion"
+import { Clock, Users, FileText, ChevronRight, Search, Filter, Smile, Frown, HelpCircle, Sparkles, Send } from "lucide-react"
 import { formatMinSec, formatDuration } from "@/lib/utils"
 import { MOCK_MEETINGS } from "@/lib/mock-data"
 
@@ -17,6 +17,20 @@ const SENTIMENT_ICONS: Record<string, { icon: React.ElementType; color: string }
 export default function MeetingsPage() {
   const [search, setSearch] = useState("")
   const [filterSentiment, setFilterSentiment] = useState<string | null>(null)
+  const [isAsking, setIsAsking] = useState(false)
+  const [aiResponse, setAiResponse] = useState<string | null>(null)
+
+  function handleVaultAsk() {
+    if (!search.trim()) return
+    setIsAsking(true)
+    setAiResponse(null)
+    
+    // Simulate AI Vault Search
+    setTimeout(() => {
+      setAiResponse("Based on your past meetings, the marketing budget was finalized at $15,000 for Q3 during the 'Q3 Planning Session' on May 12th. It was decided that 40% will go to digital ads.")
+      setIsAsking(false)
+    }, 1500)
+  }
 
   const meetings = MOCK_MEETINGS
     .filter(m => {
@@ -40,41 +54,91 @@ export default function MeetingsPage() {
         </p>
       </div>
 
-      {/* Search + Filter bar */}
-      <div className="flex gap-3 mb-6">
-        <div className="flex-1 flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[var(--card)] border border-[var(--border)]">
-          <Search className="w-4 h-4 text-[var(--text3)]" />
-          <input
-            type="text"
-            placeholder="Search meetings..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="flex-1 bg-transparent text-sm text-[var(--text)] placeholder:text-[var(--text3)] outline-none"
-          />
-        </div>
+      {/* Search + Vault Ask bar */}
+      <div className="flex flex-col gap-4 mb-8 p-4 rounded-xl border border-[var(--border)] bg-[var(--card)]/50 relative overflow-hidden">
+        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[var(--accent)] to-[var(--accent2)] opacity-50" />
+        
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-[var(--accent)]" />
+            <h2 className="text-sm font-semibold text-[var(--text)]">Vault AI Search</h2>
+          </div>
 
-        {/* Sentiment filter pills */}
-        <div className="hidden sm:flex items-center gap-1 px-2 py-1 rounded-xl bg-[var(--card)] border border-[var(--border)]">
-          <button
-            onClick={() => setFilterSentiment(null)}
-            className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${
-              !filterSentiment ? "bg-[var(--accent)]/10 text-[var(--accent)]" : "text-[var(--text3)]"
-            }`}
-          >
-            All
-          </button>
-          {["aligned", "tense", "uncertain"].map(s => (
+          {/* Sentiment filter pills */}
+          <div className="hidden sm:flex items-center gap-1 px-2 py-1 rounded-lg bg-[var(--bg)] border border-[var(--border)]">
             <button
-              key={s}
-              onClick={() => setFilterSentiment(filterSentiment === s ? null : s)}
-              className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all capitalize ${
-                filterSentiment === s ? "bg-[var(--accent)]/10 text-[var(--accent)]" : "text-[var(--text3)]"
+              onClick={() => setFilterSentiment(null)}
+              className={`px-2 py-0.5 rounded text-[11px] font-medium transition-all ${
+                !filterSentiment ? "bg-[var(--accent)]/10 text-[var(--accent)]" : "text-[var(--text3)]"
               }`}
             >
-              {s}
+              All
             </button>
-          ))}
+            {["aligned", "tense", "uncertain"].map(s => (
+              <button
+                key={s}
+                onClick={() => setFilterSentiment(filterSentiment === s ? null : s)}
+                className={`px-2 py-0.5 rounded text-[11px] font-medium transition-all capitalize ${
+                  filterSentiment === s ? "bg-[var(--accent)]/10 text-[var(--accent)]" : "text-[var(--text3)]"
+                }`}
+              >
+                {s}
+              </button>
+            ))}
+          </div>
         </div>
+
+        <div className="flex gap-2">
+          <div className="flex-1 flex items-center gap-2 px-3 py-2.5 rounded-lg bg-[var(--bg)] border border-[var(--border)] focus-within:border-[var(--accent)]/50 transition-colors">
+            <Search className="w-4 h-4 text-[var(--text3)]" />
+            <input
+              type="text"
+              placeholder="Search history, or ask 'What did we decide about the budget?'..."
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value)
+                if (aiResponse) setAiResponse(null) // clear response if typing
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && search.endsWith('?')) handleVaultAsk()
+              }}
+              className="flex-1 bg-transparent text-sm text-[var(--text)] placeholder:text-[var(--text3)] outline-none"
+            />
+            {search.endsWith('?') && (
+              <button 
+                onClick={handleVaultAsk}
+                className="flex items-center justify-center p-1.5 rounded-md bg-[var(--accent)] text-white hover:bg-[var(--accent)]/90 transition-colors"
+                title="Ask Vault AI"
+              >
+                <Send className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* AI Response Area */}
+        <AnimatePresence>
+          {(isAsking || aiResponse) && (
+            <motion.div 
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="p-3 rounded-lg bg-[var(--accent)]/10 border border-[var(--accent)]/20"
+            >
+              {isAsking ? (
+                <div className="flex items-center gap-2 text-sm text-[var(--accent2)]">
+                  <div className="w-3.5 h-3.5 rounded-full border-2 border-[var(--accent)] border-t-transparent animate-spin" />
+                  Searching your meeting vault...
+                </div>
+              ) : (
+                <p className="text-sm text-[var(--text2)] leading-relaxed">
+                  <span className="font-semibold text-[var(--accent)]">Vault AI: </span>
+                  {aiResponse}
+                </p>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Meeting list */}

@@ -82,8 +82,11 @@ export function TranscriptView({ lines, onSeek }: TranscriptViewProps) {
           return (
             <button
               key={i}
-              onClick={() => onSeek?.(line.timestamp)}
-              className="w-full text-left flex items-start gap-3 p-2 rounded-lg hover:bg-[var(--bg3)] transition-colors group"
+              onClick={() => {
+                onSeek?.(line.timestamp)
+                window.dispatchEvent(new CustomEvent('seek-audio', { detail: line.timestamp }))
+              }}
+              className="w-full text-left flex items-start gap-3 p-2 rounded-lg hover:bg-[var(--bg3)] transition-colors group cursor-pointer"
             >
               {/* Speaker name */}
               <span className="text-xs font-semibold min-w-[80px] truncate" style={{ color }}>

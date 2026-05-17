@@ -2,7 +2,8 @@
 
 import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Plus, X } from "lucide-react"
+import { Plus, X, Calendar, Mail } from "lucide-react"
+import { toast } from "sonner"
 import { getPriorityColor } from "@/lib/utils"
 import type { ActionItem } from "@/lib/types"
 
@@ -44,6 +45,34 @@ export function ActionItemList({ items, onChange }: ActionItemListProps) {
     if (e.key === "Escape") { setShowInput(false); setNewText("") }
   }
 
+  function generateCalendarInvite(item: ActionItem) {
+    const icsContent = `BEGIN:VCALENDAR
+VERSION:2.0
+BEGIN:VEVENT
+SUMMARY:${item.text}
+DESCRIPTION:Action item from Verbatim Meeting Note Taker.\\n\\nAssignee: ${item.assignee || 'Unassigned'}
+DTSTART:${new Date(Date.now() + 86400000).toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z'}
+DTEND:${new Date(Date.now() + 90000000).toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z'}
+END:VEVENT
+END:VCALENDAR`;
+
+    const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `ActionItem_${item.id}.ics`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success("Calendar invite downloaded");
+  }
+
+  function draftEmail(item: ActionItem) {
+    const subject = encodeURIComponent(`Action Item: ${item.text}`);
+    const body = encodeURIComponent(`Hi ${item.assignee || 'team'},\n\nFollowing up on our recent meeting action item:\n\n- ${item.text}\n\nPriority: ${item.priority}\n\nLet me know if you need any clarification!\n\nBest,`);
+    window.location.href = `mailto:?subject=${subject}&body=${body}`;
+    toast.success("Draft email opened");
+  }
+
   return (
     <div className="space-y-2">
       <AnimatePresence>
@@ -53,7 +82,7 @@ export function ActionItemList({ items, onChange }: ActionItemListProps) {
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.05 }}
-            className={`flex items-start gap-3 p-3 rounded-lg border border-[var(--border)] bg-[var(--card)] ${item.done ? "opacity-50" : ""}`}
+            className={`flex items-start gap-3 p-3 rounded-lg border border-[var(--border)] bg-[var(--card)] group ${item.done ? "opacity-50" : ""}`}
           >
             {/* Checkbox */}
             <input
@@ -82,6 +111,16 @@ export function ActionItemList({ items, onChange }: ActionItemListProps) {
                   <span className="text-[10px] text-[var(--text3)]">→ {item.assignee}</span>
                 )}
               </div>
+            </div>
+
+            {/* Actions: Email & Calendar */}
+            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-2">
+              <button onClick={() => generateCalendarInvite(item)} className="p-1.5 rounded-md hover:bg-[var(--bg3)] text-[var(--text3)] hover:text-[var(--accent)] transition-colors" title="Generate Calendar Invite">
+                <Calendar className="w-4 h-4" />
+              </button>
+              <button onClick={() => draftEmail(item)} className="p-1.5 rounded-md hover:bg-[var(--bg3)] text-[var(--text3)] hover:text-[var(--accent)] transition-colors" title="Draft Email">
+                <Mail className="w-4 h-4" />
+              </button>
             </div>
           </motion.div>
         ))}

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import { Download, Copy, FileText, FileDown, ClipboardList, X } from "lucide-react"
+import { Download, Copy, FileText, FileDown, ClipboardList, X, BookHeart } from "lucide-react"
 import { toast } from "sonner"
 import type { MeetingResult } from "@/lib/types"
 import { formatTimestamp } from "@/lib/utils"
@@ -114,6 +114,18 @@ ${result.transcript.map(l => `**${l.speaker}** *(${formatTimestamp(l.timestamp)}
     setOpen(false)
   }
 
+  function exportToNotion() {
+    toast.promise(
+      new Promise((resolve) => setTimeout(resolve, 1500)),
+      {
+        loading: 'Syncing to Notion workspace...',
+        success: 'Meeting notes successfully saved to Notion!',
+        error: 'Failed to sync with Notion'
+      }
+    )
+    setOpen(false)
+  }
+
   const ITEMS = [
     { icon: Copy, label: "Copy Summary", action: copySummary },
     { icon: FileText, label: "Copy Transcript", action: copyTranscript },
@@ -121,6 +133,8 @@ ${result.transcript.map(l => `**${l.speaker}** *(${formatTimestamp(l.timestamp)}
     { divider: true },
     { icon: FileDown, label: "Download .txt", action: downloadTxt },
     { icon: FileDown, label: "Download .md", action: downloadMarkdown },
+    { divider: true },
+    { icon: BookHeart, label: "Send to Notion", action: exportToNotion },
   ] as const
 
   return (

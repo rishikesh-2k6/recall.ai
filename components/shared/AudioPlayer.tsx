@@ -29,9 +29,24 @@ export function AudioPlayer({ audioUrl, onSeek }: AudioPlayerProps) {
     audio.addEventListener("timeupdate", () => setCurrentTime(audio.currentTime))
     audio.addEventListener("ended", () => setIsPlaying(false))
 
+    // Listen for custom seek events from anywhere in the app
+    const handleSeekEvent = (e: Event) => {
+      const customEvent = e as CustomEvent<number>
+      if (typeof customEvent.detail === 'number') {
+        audio.currentTime = customEvent.detail
+        setCurrentTime(customEvent.detail)
+        if (audio.paused) {
+          audio.play()
+          setIsPlaying(true)
+        }
+      }
+    }
+    window.addEventListener("seek-audio", handleSeekEvent)
+
     return () => {
       audio.pause()
       audio.src = ""
+      window.removeEventListener("seek-audio", handleSeekEvent)
     }
   }, [audioUrl])
 
