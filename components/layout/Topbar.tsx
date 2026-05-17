@@ -1,15 +1,15 @@
 "use client"
 
 import { useMeetingContext } from "@/contexts/meeting-context"
-import { Share2, Download } from "lucide-react"
+import { ExportDropdown } from "@/components/shared/ExportDropdown"
 
 export function Topbar() {
-  const { phase } = useMeetingContext()
+  const { phase, result } = useMeetingContext()
   const isLive = phase === "recording"
 
   return (
     <header className="flex items-center justify-between px-6 py-3 border-b border-[var(--border)] bg-[var(--bg2)]/50 backdrop-blur-sm">
-      {/* Left: Meeting title */}
+      {/* Left: app name */}
       <div className="flex items-center gap-3">
         <h1
           className="text-lg font-semibold text-[var(--text)] tracking-tight"
@@ -39,11 +39,9 @@ export function Topbar() {
           </span>
         </div>
 
-        {/* Export button */}
-        {phase === "complete" && (
-          <button className="p-2 rounded-lg hover:bg-[var(--bg3)] text-[var(--text2)] hover:text-[var(--text)] transition-colors">
-            <Share2 className="w-4 h-4" />
-          </button>
+        {/* Export button (only in complete phase) */}
+        {phase === "complete" && result && (
+          <ExportDropdown result={result} />
         )}
       </div>
     </header>

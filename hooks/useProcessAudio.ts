@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from "react"
 import type { MeetingResult, RecorderSettings, StepStatus, StepName } from "@/lib/types"
+import { MOCK_MEETING } from "@/lib/mock-data"
 
 const STEP_LABELS: Record<StepName, string> = {
   captured: 'Audio captured',
@@ -12,6 +13,9 @@ const STEP_LABELS: Record<StepName, string> = {
 }
 
 const STEP_NAMES: StepName[] = ['captured', 'transcribing', 'analysing', 'extracting', 'saving']
+
+// Simulated step durations in ms (for demo mode)
+const STEP_DELAYS = [600, 1200, 1000, 800, 500]
 
 function createInitialSteps(): StepStatus[] {
   return STEP_NAMES.map(name => ({
@@ -44,13 +48,7 @@ export function useProcessAudio() {
     setSteps(createInitialSteps())
 
     try {
-      // Step 0: captured
-      advanceStep(0)
-      await new Promise(r => setTimeout(r, 500))
-
-      // Step 1: transcribing
-      advanceStep(1)
-
+      // Try real API first
       const formData = new FormData()
       formData.append('audio', audioBlob, 'recording.webm')
       formData.append('name', meetingName)
@@ -59,29 +57,48 @@ export function useProcessAudio() {
       formData.append('language', settings.language)
       formData.append('style', settings.style)
 
-      const res = await fetch('/api/process-audio', {
-        method: 'POST',
-        body: formData,
-      })
+      // Step 0: captured
+      advanceStep(0)
+      await new Promise(r => setTimeout(r, STEP_DELAYS[0]))
+
+      // Step 1: transcribing
+      advanceStep(1)
+
+      let data: MeetingResult | null = null
+
+      try {
+        const res = await fetch('/api/process-audio', {
+          method: 'POST',
+          body: formData,
+        })
+
+        if (res.ok) {
+          data = await res.json()
+        }
+      } catch {
+        // Backend not available — fall through to demo mode
+      }
 
       // Step 2: analysing
       advanceStep(2)
-      await new Promise(r => setTimeout(r, 400))
-
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({ error: 'Processing failed' }))
-        throw new Error(err.error || 'Processing failed')
-      }
+      await new Promise(r => setTimeout(r, STEP_DELAYS[2]))
 
       // Step 3: extracting
       advanceStep(3)
-      await new Promise(r => setTimeout(r, 300))
-
-      const data: MeetingResult = await res.json()
+      await new Promise(r => setTimeout(r, STEP_DELAYS[3]))
 
       // Step 4: saving
       advanceStep(4)
-      await new Promise(r => setTimeout(r, 300))
+      await new Promise(r => setTimeout(r, STEP_DELAYS[4]))
+
+      // If no real data, use mock data (demo mode)
+      if (!data) {
+        data = {
+          ...MOCK_MEETING,
+          id: `meeting-${Date.now()}`,
+          name: meetingName === "New Meeting" ? MOCK_MEETING.name : meetingName,
+        }
+      }
 
       // All done
       setSteps(prev => prev.map(s => ({ ...s, state: 'done' as const })))

@@ -1,0 +1,164 @@
+"use client"
+
+import { useState, useRef, useEffect } from "react"
+import { Download, Copy, FileText, FileDown, ClipboardList, X } from "lucide-react"
+import { toast } from "sonner"
+import type { MeetingResult } from "@/lib/types"
+import { formatTimestamp } from "@/lib/utils"
+
+interface ExportDropdownProps {
+  result: MeetingResult
+}
+
+export function ExportDropdown({ result }: ExportDropdownProps) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  // Close on outside click
+  useEffect(() => {
+    function handler(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener("mousedown", handler)
+    return () => document.removeEventListener("mousedown", handler)
+  }, [])
+
+  function copySummary() {
+    const text = `# ${result.name}\n\n## Summary\n${result.tldr}\n\n## Key Quote\n"${result.keyQuote || "—"}"\n\n## Action Items\n${result.actionItems.map(a => `- [${a.done ? "x" : " "}] ${a.text}${a.assignee ? ` → ${a.assignee}` : ""}`).join("\n")}`
+    navigator.clipboard.writeText(text)
+    toast.success("Summary copied to clipboard")
+    setOpen(false)
+  }
+
+  function copyTranscript() {
+    const text = result.transcript
+      .map(l => `[${formatTimestamp(l.timestamp)}] ${l.speaker}: ${l.text}`)
+      .join("\n")
+    navigator.clipboard.writeText(text)
+    toast.success("Transcript copied to clipboard")
+    setOpen(false)
+  }
+
+  function copyActionItems() {
+    const text = result.actionItems
+      .map(a => `${a.done ? "✅" : "⬜"} [${a.priority.toUpperCase()}] ${a.text}${a.assignee ? ` → ${a.assignee}` : ""}`)
+      .join("\n")
+    navigator.clipboard.writeText(text)
+    toast.success("Action items copied to clipboard")
+    setOpen(false)
+  }
+
+  function downloadTxt() {
+    const header = `${result.name}\nDate: ${new Date().toLocaleDateString()}\nDuration: ${Math.floor(result.stats.duration / 60)} minutes\nSpeakers: ${result.stats.speakerCount}\n`
+    const summary = `\n─── SUMMARY ───\n${result.tldr}\n`
+    const transcript = `\n─── TRANSCRIPT ───\n${result.transcript.map(l => `[${formatTimestamp(l.timestamp)}] ${l.speaker}: ${l.text}`).join("\n")}\n`
+    const actions = `\n─── ACTION ITEMS ───\n${result.actionItems.map(a => `[${a.priority.toUpperCase()}] ${a.text}${a.assignee ? ` → ${a.assignee}` : ""}`).join("\n")}\n`
+    const insights = `\n─── INSIGHTS ───\nSentiment: ${result.insights.sentiment}\nRisks: ${result.insights.risks.join(", ") || "None"}\nDecisions: ${result.insights.decisions.join(", ") || "None"}\n`
+
+    const content = header + summary + transcript + actions + insights
+    const blob = new Blob([content], { type: "text/plain" })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = `${result.name.replace(/\s+/g, "_")}_notes.txt`
+    a.click()
+    URL.revokeObjectURL(url)
+    toast.success("Meeting notes downloaded")
+    setOpen(false)
+  }
+
+  function downloadMarkdown() {
+    const md = `# ${result.name}
+
+**Date:** ${new Date().toLocaleDateString()}  
+**Duration:** ${Math.floor(result.stats.duration / 60)} minutes  
+**Speakers:** ${result.stats.speakerCount}  
+**Words:** ${result.stats.wordCount.toLocaleString()}  
+
+---
+
+## Summary
+
+${result.tldr}
+
+${result.keyQuote ? `> "${result.keyQuote}"` : ""}
+
+---
+
+## Action Items
+
+${result.actionItems.map(a => `- [ ] **[${a.priority.toUpperCase()}]** ${a.text}${a.assignee ? ` → *${a.assignee}*` : ""}`).join("\n")}
+
+---
+
+## Transcript
+
+${result.transcript.map(l => `**${l.speaker}** *(${formatTimestamp(l.timestamp)})*: ${l.text}`).join("\n\n")}
+
+---
+
+## Insights
+
+- **Sentiment:** ${result.insights.sentiment}
+- **Risks:** ${result.insights.risks.length > 0 ? result.insights.risks.join("; ") : "None identified"}
+- **Decisions:** ${result.insights.decisions.length > 0 ? result.insights.decisions.join("; ") : "None recorded"}
+`
+    const blob = new Blob([md], { type: "text/markdown" })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = `${result.name.replace(/\s+/g, "_")}_notes.md`
+    a.click()
+    URL.revokeObjectURL(url)
+    toast.success("Markdown notes downloaded")
+    setOpen(false)
+  }
+
+  const ITEMS = [
+    { icon: Copy, label: "Copy Summary", action: copySummary },
+    { icon: FileText, label: "Copy Transcript", action: copyTranscript },
+    { icon: ClipboardList, label: "Copy Action Items", action: copyActionItems },
+    { divider: true },
+    { icon: FileDown, label: "Download .txt", action: downloadTxt },
+    { icon: FileDown, label: "Download .md", action: downloadMarkdown },
+  ] as const
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={() => setOpen(!open)}
+        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-[var(--text2)] hover:text-[var(--text)] hover:bg-[var(--bg3)] transition-colors border border-[var(--border)]"
+        aria-label="Export meeting notes"
+      >
+        <Download className="w-4 h-4" />
+        <span className="hidden sm:inline">Export</span>
+      </button>
+
+      {open && (
+        <div className="absolute right-0 top-full mt-2 w-52 rounded-xl bg-[var(--card)] border border-[var(--border2)] shadow-xl shadow-black/30 z-50 overflow-hidden">
+          <div className="flex items-center justify-between px-3 py-2 border-b border-[var(--border)]">
+            <span className="text-[10px] font-semibold uppercase tracking-widest text-[var(--text3)]">Export</span>
+            <button onClick={() => setOpen(false)} className="text-[var(--text3)] hover:text-[var(--text)]">
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+          {ITEMS.map((item, i) => {
+            if ('divider' in item) {
+              return <div key={i} className="border-t border-[var(--border)] my-1" />
+            }
+            return (
+              <button
+                key={i}
+                onClick={item.action}
+                className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-[var(--text2)] hover:text-[var(--text)] hover:bg-[var(--bg3)] transition-colors"
+              >
+                <item.icon className="w-4 h-4 text-[var(--text3)]" />
+                {item.label}
+              </button>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}

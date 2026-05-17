@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { useMeetingContext } from "@/contexts/meeting-context"
 import { EmptyState } from "@/components/shared/EmptyState"
 import { ProcessingState } from "@/components/shared/ProcessingState"
+import { AudioPlayer } from "@/components/shared/AudioPlayer"
 import { StatsRow } from "./StatsRow"
 import { SpeakerChips } from "./SpeakerChips"
 import { TLDRCard } from "./TLDRCard"
@@ -14,7 +15,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { FileText, MessageSquare, CheckSquare, Lightbulb } from "lucide-react"
 
 export function ResultsPanel() {
-  const { phase, result, processingSteps } = useMeetingContext()
+  const { phase, result, processingSteps, audioUrl } = useMeetingContext()
 
   if (phase === "idle" || phase === "recording" || phase === "stopped") {
     return <EmptyState />
@@ -32,6 +33,13 @@ export function ResultsPanel() {
       animate={{ opacity: 1 }}
       className="flex-1 p-6 lg:p-7 overflow-y-auto"
     >
+      {/* Audio Player */}
+      {audioUrl && (
+        <div className="mb-5">
+          <AudioPlayer audioUrl={audioUrl} />
+        </div>
+      )}
+
       {/* Stats */}
       <StatsRow stats={result.stats} />
 
@@ -52,6 +60,9 @@ export function ResultsPanel() {
           <TabsTrigger value="actions" className="flex items-center gap-1.5">
             <CheckSquare className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">Actions</span>
+            <span className="ml-1 text-[10px] px-1.5 py-0.5 rounded-full bg-[var(--accent)]/10 text-[var(--accent)]">
+              {result.actionItems.length}
+            </span>
           </TabsTrigger>
           <TabsTrigger value="insights" className="flex items-center gap-1.5">
             <Lightbulb className="w-3.5 h-3.5" />
