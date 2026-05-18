@@ -1,7 +1,16 @@
 import { NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { createAdminClient } from "@/lib/supabase/admin"
-import { stripe } from "@/lib/stripe"
+// Stripe import disabled until Stripe is configured
+// import { stripe } from "@/lib/stripe"
+const stripe = {
+  customers: {
+    del: async (id: string) => {
+      console.log("[Delete Account] (Stripe Mock) deleting customer:", id);
+      return {};
+    }
+  }
+} as any;
 
 export async function POST() {
   try {

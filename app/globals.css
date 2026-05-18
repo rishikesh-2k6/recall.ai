@@ -100,6 +100,46 @@
   --color-sidebar-ring: var(--sidebar-ring);
 }
 
+/* ─── Light Theme ─────────────────────────────────────────────── */
+:root.light {
+  --bg:           #f5f5fa;
+  --bg2:          #ededf5;
+  --bg3:          #e2e2ee;
+  --card:         #ffffff;
+  --card2:        #f0f0f8;
+  --border:       rgba(0,0,0,0.08);
+  --border2:      rgba(0,0,0,0.14);
+  --text:         #1a1830;
+  --text2:        #5a5870;
+  --text3:        #9896aa;
+  --accent:       #7c6ef0;
+  --accent2:      #5a4ed4;
+  --red:          #e03c3c;
+  --green:        #22c55e;
+  --amber:        #d97706;
+
+  --background: #f5f5fa;
+  --foreground: #1a1830;
+  --card: #ffffff;
+  --card-foreground: #1a1830;
+  --popover: #ffffff;
+  --popover-foreground: #1a1830;
+  --primary: #7c6ef0;
+  --primary-foreground: #ffffff;
+  --secondary: #ededf5;
+  --secondary-foreground: #1a1830;
+  --muted: #e2e2ee;
+  --muted-foreground: #5a5870;
+  --accent: #7c6ef0;
+  --accent-foreground: #ffffff;
+  --destructive: #e03c3c;
+  --border: rgba(0,0,0,0.08);
+  --input: #e2e2ee;
+  --ring: #7c6ef0;
+  --sidebar: #ededf5;
+  --sidebar-foreground: #1a1830;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
@@ -119,4 +159,12 @@
     pointer-events: none;
     z-index: 9999;
   }
+
+  /* ─── Custom thin scrollbars ─────────────────────────────────── */
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 999px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--text3); }
+  * { scrollbar-width: thin; scrollbar-color: var(--border2) transparent; }
 }
+

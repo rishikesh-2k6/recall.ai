@@ -3,6 +3,7 @@ import type { Metadata } from "next"
 import { DM_Serif_Display, Plus_Jakarta_Sans, DM_Mono } from "next/font/google"
 import { SubscriptionProvider } from "@/contexts/subscription-context"
 import { AuthProvider } from "@/contexts/auth-context"
+import { ThemeProvider } from "@/contexts/theme-context"
 import { Toaster } from "sonner"
 import "./globals.css"
 
@@ -31,11 +32,13 @@ export default function RootLayout({
     <html lang="en" className={`${serif.variable} ${sans.variable} ${mono.variable}`}>
       <body className="antialiased flex flex-col min-h-screen" style={{ fontFamily: 'var(--font-sans)' }}>
         <AuthProvider>
-          <SubscriptionProvider>
-            <div className="flex-1 flex flex-col">
-              {children}
-            </div>
-          </SubscriptionProvider>
+          <ThemeProvider>
+            <SubscriptionProvider>
+              <div className="flex-1 flex flex-col">
+                {children}
+              </div>
+            </SubscriptionProvider>
+          </ThemeProvider>
         </AuthProvider>
         <Toaster
           position="top-center"
