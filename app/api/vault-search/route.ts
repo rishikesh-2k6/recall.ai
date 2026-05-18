@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { createClient } from "@/lib/supabase/server"
+import { HfInference } from "@huggingface/inference"
 import OpenAI from "openai"
 
 export async function POST(req: NextRequest) {
-  // Initialize lazily so the build doesn't crash when OPENAI_API_KEY is absent
-  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+  const hf = new HfInference(process.env.HF_TOKEN)
+  const nvidia = new OpenAI({
+    apiKey: process.env.NVIDIA_API_KEY,
+    baseURL: "https://integrate.api.nvidia.com/v1",
+  })
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
@@ -13,11 +17,10 @@ export async function POST(req: NextRequest) {
   const { query } = await req.json()
 
   // 1. Embed the user's query
-  const embeddingRes = await openai.embeddings.create({
-    model: "text-embedding-3-small",
-    input: query,
-  })
-  const queryEmbedding = embeddingRes.data[0].embedding
+  const queryEmbedding = await hf.featureExtraction({
+    model: "sentence-transformers/all-MiniLM-L6-v2",
+    inputs: query,
+  }) as number[]
 
   // 2. Vector similarity search in Supabase
   const admin = createAdminClient()
@@ -34,8 +37,8 @@ export async function POST(req: NextRequest) {
 
   // 3. Answer the question using the retrieved context
   const context = chunks.map((c: any) => c.chunk_text).join("\n\n---\n\n")
-  const completion = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
+  const completion = await nvidia.chat.completions.create({
+    model: "meta/llama-3.1-70b-instruct",
     messages: [
       { role: "system", content: "You are a helpful assistant that answers questions about past meeting notes. Answer concisely based only on the provided context. If the context doesn't contain the answer, say so." },
       { role: "user", content: `Context from past meetings:\n\n${context}\n\nQuestion: ${query}` },

@@ -4,6 +4,7 @@ import OpenAI from "openai";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { z } from "zod";
+import { HfInference } from "@huggingface/inference";
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
@@ -196,7 +197,7 @@ export async function POST(req: NextRequest) {
 
     // Embed the transcript in chunks for RAG search
     try {
-      const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+      const hf = new HfInference(process.env.HF_TOKEN);
       const chunkSize = 400; // words
       const words = fullText.split(/\s+/);
       const chunks: string[] = [];
@@ -204,17 +205,19 @@ export async function POST(req: NextRequest) {
         chunks.push(words.slice(i, i + chunkSize).join(" "));
       }
 
-      if (chunks.length > 0 && process.env.OPENAI_API_KEY) {
-        const embeddingRes = await openai.embeddings.create({
-          model: "text-embedding-3-small",
-          input: chunks,
-        });
+      if (chunks.length > 0 && process.env.HF_TOKEN) {
+        // featureExtraction can accept a string or array of strings. 
+        // If an array is passed, it returns a 2D array: number[][]
+        const embeddings = await hf.featureExtraction({
+          model: "sentence-transformers/all-MiniLM-L6-v2",
+          inputs: chunks,
+        }) as number[][];
 
-        const embeddingRows = embeddingRes.data.map((e: any, i: number) => ({
+        const embeddingRows = embeddings.map((embedding, i) => ({
           meeting_id: meetingId,
           user_id: user.id,
           chunk_text: chunks[i],
-          embedding: e.embedding,
+          embedding,
         }));
 
         const { error: embedError } = await supabase.from("meeting_embeddings").insert(embeddingRows);

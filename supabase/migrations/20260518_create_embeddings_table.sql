@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS public.meeting_embeddings (
   meeting_id  UUID NOT NULL REFERENCES public.meetings(id) ON DELETE CASCADE,
   user_id     UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   chunk_text  TEXT NOT NULL,
-  embedding   vector(1536),   -- OpenAI text-embedding-3-small dimensions
+  embedding   vector(384),   -- HuggingFace all-MiniLM-L6-v2 dimensions
   created_at  TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -21,7 +21,7 @@ CREATE POLICY "Users can read their own embeddings"
 
 -- Vector similarity search function (used by Vault AI Search API)
 CREATE OR REPLACE FUNCTION match_meeting_embeddings(
-  query_embedding vector(1536),
+  query_embedding vector(384),
   match_user_id   UUID,
   match_threshold FLOAT DEFAULT 0.7,
   match_count     INT   DEFAULT 5
