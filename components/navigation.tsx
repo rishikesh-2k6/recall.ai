@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { User, Menu, X, Sparkles } from "lucide-react"
+import { User, Menu, X, Mic } from "lucide-react"
 import { useAuth } from "@/contexts/auth-context"
 import { useSubscription } from "@/contexts/subscription-context"
 import { useState } from "react"
@@ -24,10 +24,10 @@ export function Navigation() {
               href="/"
               className="flex items-center gap-2 hover:opacity-80 transition-opacity"
             >
-              <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-                <Sparkles className="w-5 h-5 text-primary-foreground" />
+              <div className="w-8 h-8 rounded-lg bg-[var(--accent)] flex items-center justify-center">
+                <Mic className="w-5 h-5 text-white" />
               </div>
-              <span className="font-semibold">8x Template</span>
+              <span className="font-bold text-lg" style={{ fontFamily: "var(--font-serif)" }}>Verbatim</span>
             </Link>
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -92,10 +92,10 @@ export function Navigation() {
               href="/"
               className="flex items-center gap-2 hover:opacity-80 transition-opacity"
             >
-              <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-                <Sparkles className="w-5 h-5 text-primary-foreground" />
+              <div className="w-8 h-8 rounded-lg bg-[var(--accent)] flex items-center justify-center">
+                <Mic className="w-5 h-5 text-white" />
               </div>
-              <span className="font-semibold text-lg">8x Template</span>
+              <span className="font-bold text-xl" style={{ fontFamily: "var(--font-serif)" }}>Verbatim</span>
             </Link>
 
             <div className="flex items-center gap-6">
