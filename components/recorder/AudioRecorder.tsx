@@ -106,7 +106,7 @@ export function AudioRecorder() {
   const showProcessButton = phase === "stopped" && (audioBlob || uploadedFile)
 
   return (
-    <section className="w-full lg:w-[340px] flex flex-col gap-5 p-6 border-r border-[var(--border)] bg-[var(--bg2)]/30 overflow-y-auto">
+    <section className="w-full lg:w-[340px] flex-shrink-0 flex flex-col gap-5 p-6 pt-16 lg:pt-6 border-b lg:border-b-0 lg:border-r border-[var(--border)] bg-[var(--bg2)]/30 overflow-y-visible lg:overflow-y-auto">
       {/* Meeting name input */}
       <div>
         <input

@@ -31,7 +31,7 @@ export function ResultsPanel() {
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="flex-1 p-6 lg:p-7 overflow-y-auto"
+      className="flex-1 p-6 lg:p-7 overflow-y-visible lg:overflow-y-auto"
     >
       {/* Audio Player */}
       {audioUrl && (

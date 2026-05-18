@@ -65,7 +65,7 @@ export default function MeetingsPage() {
           </div>
 
           {/* Sentiment filter pills */}
-          <div className="hidden sm:flex items-center gap-1 px-2 py-1 rounded-lg bg-[var(--bg)] border border-[var(--border)]">
+          <div className="flex flex-wrap items-center gap-1 px-2 py-1 rounded-lg bg-[var(--bg)] border border-[var(--border)]">
             <button
               onClick={() => setFilterSentiment(null)}
               className={`px-2 py-0.5 rounded text-[11px] font-medium transition-all ${

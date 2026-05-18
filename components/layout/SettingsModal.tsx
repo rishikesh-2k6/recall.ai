@@ -75,16 +75,16 @@ export function SettingsModal({ open, onClose, theme, onThemeChange }: SettingsM
                 </button>
               </div>
 
-              <div className="flex flex-1 overflow-hidden">
-                {/* Left tabs */}
-                <div className="w-44 border-r border-[var(--border)] py-3 flex-shrink-0">
+              <div className="flex flex-col sm:flex-row flex-1 overflow-hidden">
+                {/* Tabs */}
+                <div className="w-full sm:w-44 flex sm:flex-col overflow-x-auto sm:overflow-visible border-b sm:border-b-0 sm:border-r border-[var(--border)] py-2 sm:py-3 flex-shrink-0 px-2 sm:px-0">
                   {TABS.map(tab => (
                     <button
                       key={tab.id}
                       onClick={() => setActiveTab(tab.id)}
                       className={`
-                        w-full flex items-center gap-2.5 px-4 py-2.5 text-sm transition-colors text-left relative
-                        ${tab.id === "danger" ? "mt-auto" : ""}
+                        flex-shrink-0 flex items-center gap-2.5 px-3 sm:px-4 py-2 sm:py-2.5 text-sm transition-colors text-left relative rounded-lg sm:rounded-none
+                        ${tab.id === "danger" ? "sm:mt-auto ml-auto sm:ml-0" : ""}
                         ${activeTab === tab.id
                           ? tab.id === "danger"
                             ? "text-[var(--red)] bg-[var(--red)]/8 font-medium"
@@ -96,10 +96,13 @@ export function SettingsModal({ open, onClose, theme, onThemeChange }: SettingsM
                       `}
                     >
                       {activeTab === tab.id && (
-                        <span className="absolute right-0 top-0 h-full w-0.5 bg-[var(--accent)] rounded-l-full" />
+                        <>
+                          <span className="hidden sm:block absolute right-0 top-0 h-full w-0.5 bg-[var(--accent)] rounded-l-full" />
+                          <span className="sm:hidden absolute bottom-0 left-1/2 -translate-x-1/2 w-1/2 h-0.5 bg-[var(--accent)] rounded-t-full" />
+                        </>
                       )}
                       <tab.icon className="w-4 h-4 flex-shrink-0" />
-                      {tab.label}
+                      <span className="whitespace-nowrap">{tab.label}</span>
                     </button>
                   ))}
                 </div>
