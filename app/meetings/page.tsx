@@ -244,8 +244,6 @@ export default function MeetingsPage() {
           )
         })}
 
-        )}
-
         {!isLoading && meetings.length === 0 && (
           <div className="text-center py-16">
             <p className="text-sm text-[var(--text3)]">No meetings match your search.</p>
