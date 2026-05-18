@@ -71,7 +71,7 @@ export function ResultsPanel() {
         </TabsList>
 
         <AnimatePresence mode="wait">
-          <TabsContent value="tldr">
+          <TabsContent value="tldr" key="tldr">
             <motion.div
               key="tldr"
               initial={{ opacity: 0, x: 10 }}
@@ -82,7 +82,7 @@ export function ResultsPanel() {
             </motion.div>
           </TabsContent>
 
-          <TabsContent value="transcript">
+          <TabsContent value="transcript" key="transcript">
             <motion.div
               key="transcript"
               initial={{ opacity: 0, x: 10 }}
@@ -93,7 +93,7 @@ export function ResultsPanel() {
             </motion.div>
           </TabsContent>
 
-          <TabsContent value="actions">
+          <TabsContent value="actions" key="actions">
             <motion.div
               key="actions"
               initial={{ opacity: 0, x: 10 }}
@@ -104,7 +104,7 @@ export function ResultsPanel() {
             </motion.div>
           </TabsContent>
 
-          <TabsContent value="insights">
+          <TabsContent value="insights" key="insights">
             <motion.div
               key="insights"
               initial={{ opacity: 0, x: 10 }}
