@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { X, Sun, Moon, Monitor, Key, User, Trash2, Bell, Globe, ChevronRight, Shield } from "lucide-react"
+import { X, Sun, Moon, Monitor, Key, User, Trash2, Bell, Shield } from "lucide-react"
 import { toast } from "sonner"
 
 interface SettingsModalProps {
@@ -82,13 +82,23 @@ export function SettingsModal({ open, onClose, theme, onThemeChange }: SettingsM
                     <button
                       key={tab.id}
                       onClick={() => setActiveTab(tab.id)}
-                      className={`w-full flex items-center gap-2.5 px-4 py-2.5 text-sm transition-colors ${
-                        activeTab === tab.id
-                          ? "text-[var(--accent)] bg-[var(--accent)]/8 font-medium border-r-2 border-[var(--accent)]"
-                          : "text-[var(--text2)] hover:text-[var(--text)] hover:bg-[var(--bg3)]"
-                      } ${tab.id === "danger" ? "mt-4 text-[var(--red)] hover:text-[var(--red)]" : ""}`}
+                      className={`
+                        w-full flex items-center gap-2.5 px-4 py-2.5 text-sm transition-colors text-left relative
+                        ${tab.id === "danger" ? "mt-auto" : ""}
+                        ${activeTab === tab.id
+                          ? tab.id === "danger"
+                            ? "text-[var(--red)] bg-[var(--red)]/8 font-medium"
+                            : "text-[var(--accent)] bg-[var(--accent)]/8 font-medium"
+                          : tab.id === "danger"
+                            ? "text-[var(--red)]/70 hover:text-[var(--red)] hover:bg-[var(--red)]/5"
+                            : "text-[var(--text2)] hover:text-[var(--text)] hover:bg-[var(--bg3)]"
+                        }
+                      `}
                     >
-                      <tab.icon className="w-4 h-4" />
+                      {activeTab === tab.id && (
+                        <span className="absolute right-0 top-0 h-full w-0.5 bg-[var(--accent)] rounded-l-full" />
+                      )}
+                      <tab.icon className="w-4 h-4 flex-shrink-0" />
                       {tab.label}
                     </button>
                   ))}
