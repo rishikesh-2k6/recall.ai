@@ -116,11 +116,19 @@ ${result.transcript.map(l => `**${l.speaker}** *(${formatTimestamp(l.timestamp)}
 
   function exportToNotion() {
     toast.promise(
-      new Promise((resolve) => setTimeout(resolve, 1500)),
+      fetch("/api/export/notion", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ meetingId: result.id }),
+      }).then(async r => {
+        const data = await r.json()
+        if (!r.ok) throw new Error(data.error || "Failed")
+        return data
+      }),
       {
-        loading: 'Syncing to Notion workspace...',
-        success: 'Meeting notes successfully saved to Notion!',
-        error: 'Failed to sync with Notion'
+        loading: "Syncing to Notion workspace...",
+        success: "Meeting notes saved to Notion!",
+        error: "Failed to sync with Notion",
       }
     )
     setOpen(false)

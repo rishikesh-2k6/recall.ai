@@ -1,10 +1,10 @@
 "use client"
 
 import { useParams } from "next/navigation"
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import { motion } from "framer-motion"
 import { ArrowLeft, Download, Clock, Users, FileText, CheckSquare } from "lucide-react"
-import { MOCK_MEETINGS } from "@/lib/mock-data"
 import { formatMinSec } from "@/lib/utils"
 import { StatsRow } from "@/components/results/StatsRow"
 import { SpeakerChips } from "@/components/results/SpeakerChips"
@@ -20,7 +20,23 @@ export default function MeetingDetailPage() {
   const params = useParams()
   const id = params?.id as string
 
-  const meeting = MOCK_MEETINGS.find(m => m.id === id)
+  const [meeting, setMeeting] = useState<any>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  useEffect(() => {
+    if (id) {
+      fetch(`/api/meetings/${id}`)
+        .then(r => r.json())
+        .then(data => {
+          if (!data.error) setMeeting(data)
+          setIsLoading(false)
+        })
+        .catch(() => setIsLoading(false))
+    }
+  }, [id])
+
+  if (isLoading) {
+    return <div className="flex-1 flex items-center justify-center p-12 text-[var(--text3)]">Loading meeting details...</div>
+  }
 
   if (!meeting) {
     return (

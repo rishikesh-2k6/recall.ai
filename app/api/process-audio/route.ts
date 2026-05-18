@@ -194,6 +194,36 @@ export async function POST(req: NextRequest) {
       throw new Error(`Failed to save meeting to database: ${dbError.message}`);
     }
 
+    // Embed the transcript in chunks for RAG search
+    try {
+      const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+      const chunkSize = 400; // words
+      const words = fullText.split(/\s+/);
+      const chunks: string[] = [];
+      for (let i = 0; i < words.length; i += chunkSize) {
+        chunks.push(words.slice(i, i + chunkSize).join(" "));
+      }
+
+      if (chunks.length > 0 && process.env.OPENAI_API_KEY) {
+        const embeddingRes = await openai.embeddings.create({
+          model: "text-embedding-3-small",
+          input: chunks,
+        });
+
+        const embeddingRows = embeddingRes.data.map((e: any, i: number) => ({
+          meeting_id: meetingId,
+          user_id: user.id,
+          chunk_text: chunks[i],
+          embedding: e.embedding,
+        }));
+
+        const { error: embedError } = await supabase.from("meeting_embeddings").insert(embeddingRows);
+        if (embedError) console.error("Embedding Insert Error:", embedError.message);
+      }
+    } catch (embedError) {
+      console.error("Failed to generate embeddings:", embedError);
+    }
+
     return NextResponse.json({ ...result, audioUrl });
   } catch (error: any) {
     console.error("Error processing audio:", error);

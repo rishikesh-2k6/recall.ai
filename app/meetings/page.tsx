@@ -5,8 +5,6 @@ import Link from "next/link"
 import { motion, AnimatePresence } from "framer-motion"
 import { Clock, Users, FileText, ChevronRight, Search, Filter, Smile, Frown, HelpCircle, Sparkles, Send } from "lucide-react"
 import { formatMinSec, formatDuration } from "@/lib/utils"
-import { MOCK_MEETINGS } from "@/lib/mock-data"
-
 const SENTIMENT_ICONS: Record<string, { icon: React.ElementType; color: string }> = {
   aligned:   { icon: Smile, color: 'var(--green)' },
   tense:     { icon: Frown, color: 'var(--red)' },
@@ -19,23 +17,43 @@ export default function MeetingsPage() {
   const [filterSentiment, setFilterSentiment] = useState<string | null>(null)
   const [isAsking, setIsAsking] = useState(false)
   const [aiResponse, setAiResponse] = useState<string | null>(null)
+  const [allMeetings, setAllMeetings] = useState<any[]>([])
+  const [isLoading, setIsLoading] = useState(true)
 
-  function handleVaultAsk() {
+  useEffect(() => {
+    fetch("/api/meetings")
+      .then(r => r.json())
+      .then(data => {
+        if (Array.isArray(data)) setAllMeetings(data)
+        setIsLoading(false)
+      })
+      .catch(() => setIsLoading(false))
+  }, [])
+
+  async function handleVaultAsk() {
     if (!search.trim()) return
     setIsAsking(true)
     setAiResponse(null)
     
-    // Simulate AI Vault Search
-    setTimeout(() => {
-      setAiResponse("Based on your past meetings, the marketing budget was finalized at $15,000 for Q3 during the 'Q3 Planning Session' on May 12th. It was decided that 40% will go to digital ads.")
-      setIsAsking(false)
-    }, 1500)
+    try {
+      const res = await fetch("/api/vault-search", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query: search }),
+      })
+      const data = await res.json()
+      setAiResponse(data.answer || "No answer found.")
+    } catch (e) {
+      setAiResponse("An error occurred while searching your vault.")
+    }
+    
+    setIsAsking(false)
   }
 
-  const meetings = MOCK_MEETINGS
+  const meetings = allMeetings
     .filter(m => {
       if (search && !m.name.toLowerCase().includes(search.toLowerCase())) return false
-      if (filterSentiment && m.insights.sentiment !== filterSentiment) return false
+      if (filterSentiment && m.insights?.sentiment && m.insights.sentiment !== filterSentiment) return false
       return true
     })
 
@@ -143,8 +161,10 @@ export default function MeetingsPage() {
 
       {/* Meeting list */}
       <div className="space-y-3">
-        {meetings.map((meeting, i) => {
-          const sentiment = SENTIMENT_ICONS[meeting.insights.sentiment] || SENTIMENT_ICONS.neutral
+        {isLoading ? (
+          <div className="text-center py-16 text-sm text-[var(--text3)]">Loading your meetings...</div>
+        ) : meetings.map((meeting, i) => {
+          const sentiment = SENTIMENT_ICONS[meeting.insights?.sentiment] || SENTIMENT_ICONS.neutral
           const date = new Date(meeting.created_at)
 
           return (
@@ -224,7 +244,9 @@ export default function MeetingsPage() {
           )
         })}
 
-        {meetings.length === 0 && (
+        )}
+
+        {!isLoading && meetings.length === 0 && (
           <div className="text-center py-16">
             <p className="text-sm text-[var(--text3)]">No meetings match your search.</p>
           </div>
