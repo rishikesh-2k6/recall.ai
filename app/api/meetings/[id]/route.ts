@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params
+
   const supabase = await createClient()
   const { data: { user }, error: authError } = await supabase.auth.getUser()
   if (authError || !user) {
@@ -11,7 +16,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   const { data, error } = await supabase
     .from("meetings")
     .select("*")
-    .eq("id", params.id)
+    .eq("id", id)
     .eq("user_id", user.id)
     .single()
 
@@ -25,7 +30,12 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     name: data.name,
     tldr: data.tldr,
     keyQuote: data.key_quote,
-    stats: data.stats || { duration: data.duration, speakerCount: data.speakers?.length || 1, wordCount: 0, actionItemCount: data.action_items?.length || 0 },
+    stats: data.stats || {
+      duration: data.duration,
+      speakerCount: data.speakers?.length || 1,
+      wordCount: 0,
+      actionItemCount: data.action_items?.length || 0,
+    },
     speakers: data.speakers,
     transcript: data.transcript,
     actionItems: data.action_items,

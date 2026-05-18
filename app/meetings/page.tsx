@@ -1,10 +1,11 @@
 "use client"
 
-import { useState } from "react"
+import React, { useState, useEffect } from "react"
 import Link from "next/link"
 import { motion, AnimatePresence } from "framer-motion"
-import { Clock, Users, FileText, ChevronRight, Search, Filter, Smile, Frown, HelpCircle, Sparkles, Send } from "lucide-react"
-import { formatMinSec, formatDuration } from "@/lib/utils"
+import { Clock, Users, FileText, ChevronRight, Search, Smile, Frown, HelpCircle, Sparkles, Send } from "lucide-react"
+import { formatMinSec } from "@/lib/utils"
+
 const SENTIMENT_ICONS: Record<string, { icon: React.ElementType; color: string }> = {
   aligned:   { icon: Smile, color: 'var(--green)' },
   tense:     { icon: Frown, color: 'var(--red)' },
@@ -193,20 +194,22 @@ export default function MeetingsPage() {
                     </p>
 
                     {/* Stats */}
+                    {meeting.stats && (
                     <div className="flex items-center gap-4 text-[10px] text-[var(--text3)]">
                       <span className="flex items-center gap-1">
                         <Clock className="w-3 h-3" />
-                        {formatMinSec(meeting.stats.duration)}
+                        {formatMinSec(meeting.stats.duration ?? 0)}
                       </span>
                       <span className="flex items-center gap-1">
                         <Users className="w-3 h-3" />
-                        {meeting.stats.speakerCount} speakers
+                        {meeting.stats.speakerCount ?? 1} speakers
                       </span>
                       <span className="flex items-center gap-1">
                         <FileText className="w-3 h-3" />
-                        {meeting.stats.wordCount.toLocaleString()} words
+                        {(meeting.stats.wordCount ?? 0).toLocaleString()} words
                       </span>
                     </div>
+                    )}
                   </div>
 
                   {/* Right: date + arrow */}
@@ -222,7 +225,7 @@ export default function MeetingsPage() {
                 {meeting.actionItems.length > 0 && (
                   <div className="mt-3 pt-3 border-t border-[var(--border)]">
                     <div className="flex items-center gap-2 flex-wrap">
-                      {meeting.actionItems.slice(0, 3).map(item => (
+                      {meeting.actionItems.slice(0, 3).map((item: any) => (
                         <span
                           key={item.id}
                           className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[var(--bg3)] text-[10px] text-[var(--text2)]"
