@@ -57,7 +57,8 @@ export function useWaveform(
       const bars = 48
       const barWidth = w / bars
       for (let i = 0; i < bars; i++) {
-        const amplitude = dataArray[i * 3] / 255
+        const dataIndex = Math.min(i * 2, dataArray.length - 1)
+        const amplitude = (dataArray[dataIndex] ?? 0) / 255
         const barH = Math.max(amplitude * h * 0.8, 2)
         
         // gradient purple for bars

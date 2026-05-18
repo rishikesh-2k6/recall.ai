@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import Groq from "groq-sdk";
 import OpenAI from "openai";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { createClient } from "@/lib/supabase/server";
+import { z } from "zod";
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
@@ -13,6 +15,13 @@ const nvidia = new OpenAI({
 
 export async function POST(req: NextRequest) {
   try {
+    const supabaseAuth = await createClient();
+    const { data: { user } } = await supabaseAuth.auth.getUser();
+    
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized. Please log in to process meetings." }, { status: 401 });
+    }
+
     const formData = await req.formData();
     const file = formData.get("audio") as File;
     const name = formData.get("name") as string || "New Meeting";
@@ -73,7 +82,29 @@ export async function POST(req: NextRequest) {
       temperature: 0.2,
     });
 
-    const llmResult = JSON.parse(completion.choices[0].message.content || "{}");
+    const LLMResultSchema = z.object({
+      tldr: z.string().default("No summary generated."),
+      keyQuote: z.string().default(""),
+      actionItems: z.array(z.object({
+        text: z.string(),
+        assignee: z.string().nullable().optional(),
+        priority: z.enum(["high", "medium", "low"]).default("medium")
+      })).default([]),
+      insights: z.object({
+        sentiment: z.enum(["aligned", "tense", "uncertain", "neutral"]).default("neutral"),
+        risks: z.array(z.string()).default([]),
+        decisions: z.array(z.string()).default([])
+      }).default({ sentiment: "neutral", risks: [], decisions: [] })
+    });
+
+    let llmResult;
+    try {
+      const rawJson = JSON.parse(completion.choices[0].message.content || "{}");
+      llmResult = LLMResultSchema.parse(rawJson);
+    } catch (parseError) {
+      console.error("LLM JSON Parse Error:", parseError);
+      llmResult = LLMResultSchema.parse({}); // Fallback to safe defaults if LLM hallucinates
+    }
 
     // =========================================================================
     // PHASE 3: RESULT ASSEMBLY & PERSISTENCE (Supabase)
@@ -145,6 +176,7 @@ export async function POST(req: NextRequest) {
       .from("meetings")
       .insert({
         id: result.id,
+        user_id: user.id, // Tie the meeting to the authenticated user for RLS
         name: result.name,
         duration: result.stats.duration,
         transcript: result.transcript,
@@ -159,6 +191,7 @@ export async function POST(req: NextRequest) {
 
     if (dbError) {
       console.error("Supabase Database Insert Error:", dbError.message);
+      throw new Error(`Failed to save meeting to database: ${dbError.message}`);
     }
 
     return NextResponse.json({ ...result, audioUrl });
