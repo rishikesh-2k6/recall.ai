@@ -50,7 +50,7 @@ export function ActionItemList({ items, onChange }: ActionItemListProps) {
 VERSION:2.0
 BEGIN:VEVENT
 SUMMARY:${item.text}
-DESCRIPTION:Action item from Verbatim Meeting Note Taker.\\n\\nAssignee: ${item.assignee || 'Unassigned'}
+DESCRIPTION:Action item from Recall.ai Meeting Note Taker.\\n\\nAssignee: ${item.assignee || 'Unassigned'}
 DTSTART:${new Date(Date.now() + 86400000).toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z'}
 DTEND:${new Date(Date.now() + 90000000).toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z'}
 END:VEVENT

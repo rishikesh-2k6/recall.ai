@@ -12,7 +12,7 @@ const sans = Plus_Jakarta_Sans({ subsets: ["latin"], weight: ["400", "500", "600
 const mono = DM_Mono({ subsets: ["latin"], weight: ["400", "500"], variable: "--font-mono" })
 
 export const metadata: Metadata = {
-  title: "Verbatim — AI Meeting & Lecture Note Taker",
+  title: "Recall.ai — AI Meeting & Lecture Note Taker",
   description: "Record your meetings and lectures, get instant AI-powered transcripts, summaries, and action items.",
   icons: {
     icon: [

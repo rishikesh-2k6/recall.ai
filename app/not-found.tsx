@@ -1,7 +1,11 @@
+"use client"
+
 import { Navigation } from "@/components/navigation"
 import { Button } from "@/components/ui/button"
 import { SearchX, Home } from "lucide-react"
 import Link from "next/link"
+
+export const dynamic = "force-dynamic"
 
 export default function NotFound() {
   return (

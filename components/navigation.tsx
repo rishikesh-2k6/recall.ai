@@ -27,7 +27,7 @@ export function Navigation() {
               <div className="w-8 h-8 rounded-lg bg-[var(--accent)] flex items-center justify-center">
                 <Mic className="w-5 h-5 text-white" />
               </div>
-              <span className="font-bold text-lg" style={{ fontFamily: "var(--font-serif)" }}>Verbatim</span>
+              <span className="font-bold text-lg" style={{ fontFamily: "var(--font-serif)" }}>Recall.ai</span>
             </Link>
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -95,7 +95,7 @@ export function Navigation() {
               <div className="w-8 h-8 rounded-lg bg-[var(--accent)] flex items-center justify-center">
                 <Mic className="w-5 h-5 text-white" />
               </div>
-              <span className="font-bold text-xl" style={{ fontFamily: "var(--font-serif)" }}>Verbatim</span>
+              <span className="font-bold text-xl" style={{ fontFamily: "var(--font-serif)" }}>Recall.ai</span>
             </Link>
 
             <div className="flex items-center gap-6">

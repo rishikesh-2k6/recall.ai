@@ -132,7 +132,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
 
     // Listen for auth changes
     const { data: { subscription: authSubscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
+      async (_event: any, session: any) => {
         if (session?.user) {
           await fetchSubscription()
         } else {

@@ -12,7 +12,7 @@ export default function HomePage() {
             <Mic className="w-4 h-4 text-white" />
           </div>
           <span className="text-xl font-semibold text-[var(--text)]" style={{ fontFamily: 'var(--font-serif)' }}>
-            Verbatim
+            Recall.ai
           </span>
         </div>
         <div className="flex items-center gap-3">

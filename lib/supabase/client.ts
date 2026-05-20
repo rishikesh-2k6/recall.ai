@@ -1,6 +1,8 @@
 import { createBrowserClient } from "@supabase/ssr"
 
-export const supabase = createBrowserClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
-)
+export const supabase = (typeof window !== "undefined"
+  ? createBrowserClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+    )
+  : null as any) as ReturnType<typeof createBrowserClient>

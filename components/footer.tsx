@@ -11,7 +11,7 @@ export function Footer() {
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
           {/* Copyright */}
           <div className="text-sm text-muted-foreground">
-            © {currentYear} Verbatim. All rights reserved.
+            © {currentYear} Recall.ai. All rights reserved.
           </div>
 
           {/* Links */}

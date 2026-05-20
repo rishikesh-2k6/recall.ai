@@ -64,7 +64,7 @@ export default function LoginPage() {
           <Mic className="w-4.5 h-4.5 text-white" />
         </div>
         <span className="text-2xl font-bold text-[var(--text)]" style={{ fontFamily: "var(--font-serif)" }}>
-          Verbatim
+          Recall.ai
         </span>
       </Link>
 
