@@ -14,6 +14,73 @@ const nvidia = new OpenAI({
   baseURL: "https://integrate.api.nvidia.com/v1",
 });
 
+function chunkTextBySentences(text: string, maxWordsPerChunk: number = 250, overlapWords: number = 50): string[] {
+  if (!text) return [];
+  
+  // Split into sentences based on punctuation followed by space
+  const sentences = text
+    .replace(/([.!?])\s+/g, "$1|")
+    .split("|")
+    .map(s => s.trim())
+    .filter(Boolean);
+    
+  const chunks: string[] = [];
+  let currentChunk: string[] = [];
+  let currentWordCount = 0;
+  
+  for (let i = 0; i < sentences.length; i++) {
+    const sentence = sentences[i];
+    const sentenceWordCount = sentence.split(/\s+/).length;
+    
+    // If a single sentence is exceptionally long, handle it separately
+    if (sentenceWordCount > maxWordsPerChunk) {
+      if (currentChunk.length > 0) {
+        chunks.push(currentChunk.join(" "));
+        currentChunk = [];
+        currentWordCount = 0;
+      }
+      // Chunk the single long sentence by words
+      const words = sentence.split(/\s+/);
+      for (let w = 0; w < words.length; w += (maxWordsPerChunk - overlapWords)) {
+        const slice = words.slice(w, w + maxWordsPerChunk);
+        if (slice.length > 0) {
+          chunks.push(slice.join(" "));
+        }
+      }
+      continue;
+    }
+    
+    if (currentWordCount + sentenceWordCount > maxWordsPerChunk) {
+      // Close off the current chunk
+      chunks.push(currentChunk.join(" "));
+      
+      // Construct overlap by backtracking through currentChunk sentences
+      const overlapSentences: string[] = [];
+      let accumulatedOverlapWords = 0;
+      for (let j = currentChunk.length - 1; j >= 0; j--) {
+        const wordsInSentence = currentChunk[j].split(/\s+/).length;
+        if (accumulatedOverlapWords + wordsInSentence > overlapWords) {
+          break;
+        }
+        overlapSentences.unshift(currentChunk[j]);
+        accumulatedOverlapWords += wordsInSentence;
+      }
+      
+      currentChunk = [...overlapSentences, sentence];
+      currentWordCount = accumulatedOverlapWords + sentenceWordCount;
+    } else {
+      currentChunk.push(sentence);
+      currentWordCount += sentenceWordCount;
+    }
+  }
+  
+  if (currentChunk.length > 0) {
+    chunks.push(currentChunk.join(" "));
+  }
+  
+  return chunks;
+}
+
 export const maxDuration = 60; // Max allowed serverless timeout on Vercel Hobby tier (60s)
 
 export async function POST(req: NextRequest) {
@@ -251,12 +318,7 @@ export async function POST(req: NextRequest) {
     // Embed the transcript in chunks for RAG search
     try {
       const hf = new HfInference(process.env.HF_TOKEN);
-      const chunkSize = 400; // words
-      const words = fullText.split(/\s+/);
-      const chunks: string[] = [];
-      for (let i = 0; i < words.length; i += chunkSize) {
-        chunks.push(words.slice(i, i + chunkSize).join(" "));
-      }
+      const chunks = chunkTextBySentences(fullText, 250, 50);
 
       if (chunks.length > 0 && process.env.HF_TOKEN) {
         // featureExtraction can accept a string or array of strings. 

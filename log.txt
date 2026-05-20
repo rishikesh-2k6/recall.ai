@@ -373,3 +373,14 @@ I successfully developed, verified, and integrated the complete dynamic meeting 
 5. **Meetings History Sync & Deletion UI:** Updated `app/meetings/page.tsx` to bind to the custom sync event and added a sleek hover-based Trash button absolutely positioned on the meeting cards to trigger API deletions and broadcast updates.
 6. **Audio Capture Integration:** Refactored `components/recorder/AudioRecorder.tsx` to broadcast the sync event on successful processing, ensuring new captures immediately appear in the sidebar.
 7. **Verification & Commit:** Ran a Next.js production build (`npm run build`) to verify that all modules are fully compile-safe, and staged/committed/pushed all changes securely to GitHub.
+
+--- AUDIO STORAGE CLEANUP & SENTENCE CHUNKING SESSION ---
+
+Dhanush:
+push today's changes and update the log.txt under the name Dhanush
+
+Antigravity:
+I have successfully pushed today's changes and updated the log:
+1. **Supabase Audio Storage Deletion:** Upgraded the meeting deletion API (`app/api/meetings/[id]/route.ts`) to fetch the meeting's `audio_url`, parse out the file name, and delete the corresponding audio file from the Supabase storage bucket (`meetings-audio`) using the admin client before removing the database entry.
+2. **Sentence-Based Text Chunking:** Replaced the simple word-slice chunking algorithm in `/api/process-audio/route.ts` with a highly robust sentence-based chunking function `chunkTextBySentences()`. This ensures that meeting transcript sections are split properly along sentence boundaries (respecting a maximum word threshold and overlap), resulting in cleaner vector embeddings for RAG retrieval.
+3. **Repository Sync:** Committed and pushed all of today's changes directly to the remote repository.

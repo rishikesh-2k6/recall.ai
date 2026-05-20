@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
+import { createAdminClient } from "@/lib/supabase/admin"
 
 export async function GET(
   req: NextRequest,
@@ -55,6 +56,40 @@ export async function DELETE(
   const { data: { user }, error: authError } = await supabase.auth.getUser()
   if (authError || !user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  }
+
+  // Fetch the meeting to get its audio_url
+  const { data: meeting, error: fetchError } = await supabase
+    .from("meetings")
+    .select("audio_url")
+    .eq("id", id)
+    .eq("user_id", user.id)
+    .single()
+
+  if (fetchError || !meeting) {
+    return NextResponse.json({ error: "Meeting not found" }, { status: 404 })
+  }
+
+  // If there's an audio file associated, delete it from storage
+  if (meeting.audio_url) {
+    try {
+      const url = new URL(meeting.audio_url)
+      const pathParts = url.pathname.split("/")
+      const fileName = pathParts[pathParts.length - 1]
+      
+      if (fileName) {
+        const adminSupabase = createAdminClient()
+        const { error: storageError } = await adminSupabase.storage
+          .from("meetings-audio")
+          .remove([fileName])
+
+        if (storageError) {
+          console.error("Supabase Storage error deleting file:", storageError.message)
+        }
+      }
+    } catch (err) {
+      console.error("Failed to parse audio_url or delete file:", err)
+    }
   }
 
   const { error } = await supabase
