@@ -90,37 +90,41 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   }, [fetchSubscription])
 
   const upgradeToPro = useCallback(async () => {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
-
-    const { error } = await supabase
-      .from("subscriptions")
-      .update({ tier: "pro" })
-      .eq("user_id", user.id)
-
-    if (error) {
+    try {
+      const response = await fetch("/api/account/upgrade", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      })
+      
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || "Failed to upgrade subscription")
+      }
+      
+      await refresh()
+    } catch (error) {
       console.error("[SubscriptionContext] Upgrade error:", error)
       throw error
     }
-
-    await refresh()
   }, [refresh])
 
   const downgradeToFree = useCallback(async () => {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
-
-    const { error } = await supabase
-      .from("subscriptions")
-      .update({ tier: "free" })
-      .eq("user_id", user.id)
-
-    if (error) {
+    try {
+      const response = await fetch("/api/account/downgrade", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      })
+      
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || "Failed to downgrade subscription")
+      }
+      
+      await refresh()
+    } catch (error) {
       console.error("[SubscriptionContext] Downgrade error:", error)
       throw error
     }
-
-    await refresh()
   }, [refresh])
 
   useEffect(() => {

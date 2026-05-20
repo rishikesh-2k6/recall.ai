@@ -17,13 +17,13 @@ CREATE POLICY "Users can view their own subscription"
   TO authenticated
   USING (auth.uid() = user_id);
 
--- Policy: Users can update their own subscription tier
+-- Policy: Users can update their own subscription tier (only downgrade, not upgrade directly via client client)
 CREATE POLICY "Users can update their own subscription"
   ON public.subscriptions
   FOR UPDATE
   TO authenticated
   USING (auth.uid() = user_id)
-  WITH CHECK (auth.uid() = user_id);
+  WITH CHECK (auth.uid() = user_id AND tier = 'free');
 
 -- Policy: Users can insert their own subscription (for first-time setup)
 CREATE POLICY "Users can insert their own subscription"

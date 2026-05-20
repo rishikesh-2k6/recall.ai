@@ -29,14 +29,41 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
+  // Helper to ensure returnUrl is a safe relative path
+  const getSafeReturnUrl = (urlStr: string | null, fallback: string = "/dashboard"): string => {
+    if (!urlStr) return fallback
+    try {
+      // Decode URL in case it's double encoded
+      const decoded = decodeURIComponent(urlStr)
+      // Only allow relative paths starting with / and not starting with // or /\ (which can be interpreted as protocols in some browsers)
+      if (decoded.startsWith("/") && !decoded.startsWith("//") && !decoded.startsWith("/\\")) {
+        return decoded
+      }
+    } catch {
+      // ignore parsing error
+    }
+    return fallback
+  }
+
+  const currentPath = request.nextUrl.pathname
+
   // Redirect authenticated users away from auth pages
-  if (user && (request.nextUrl.pathname.startsWith("/auth/login") || request.nextUrl.pathname.startsWith("/auth/signup"))) {
-    const returnUrl = request.nextUrl.searchParams.get("returnUrl") || "/listen"
+  if (user && (currentPath.startsWith("/auth/login") || currentPath.startsWith("/auth/signup"))) {
+    const returnUrl = getSafeReturnUrl(request.nextUrl.searchParams.get("returnUrl"))
     return NextResponse.redirect(new URL(returnUrl, request.url))
   }
 
-  // Allow unauthenticated users to access /listen for preview mode
-  // The audio player will enforce preview limits and show upgrade prompts
+  // Redirect unauthenticated users from protected routes
+  const protectedRoutes = ["/dashboard", "/meetings", "/profile", "/upgrade"]
+  const isProtectedRoute = protectedRoutes.some(route => currentPath.startsWith(route))
+
+  if (!user && isProtectedRoute) {
+    const loginUrl = new URL("/auth/login", request.url)
+    const returnPath = currentPath + request.nextUrl.search
+    loginUrl.searchParams.set("returnUrl", returnPath)
+    return NextResponse.redirect(loginUrl)
+  }
 
   return supabaseResponse
 }
+
