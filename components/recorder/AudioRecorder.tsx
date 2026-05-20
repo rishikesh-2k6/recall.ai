@@ -1,11 +1,11 @@
 "use client"
 
-import { useState, useEffect, useMemo, useRef, useCallback } from "react"
+import { useState, useRef, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import { 
-  Sparkles, AlertCircle, Zap, Mic, Square, Loader2, Upload, Monitor, 
-  Settings, Sliders, Volume2, Globe, FileText, CheckCircle2, ChevronRight, RotateCcw, Clock, VolumeX
+  Sparkles, Mic, Square, Loader2, Upload, Monitor,
+  Sliders, Globe, FileText, CheckCircle2, RotateCcw, VolumeX
 } from "lucide-react"
 import { toast } from "sonner"
 import { useAudioRecorder } from "@/hooks/useAudioRecorder"
@@ -19,7 +19,7 @@ export function AudioRecorder() {
   const router = useRouter()
   const { phase, setPhase, setResult, setProcessingSteps, setAudioUrl } = useMeetingContext()
   const { isRecording, audioBlob, stream, error: micError, start: startMic, stop: stopMic } = useAudioRecorder()
-  const { formatted, start: startTimer, stop: stopTimer, reset: resetTimer } = useTimer()
+  const { start: startTimer, stop: stopTimer, reset: resetTimer } = useTimer()
   const { process, steps, error: processError } = useProcessAudio()
 
   const [meetingName, setMeetingName] = useState("New Meeting")
@@ -33,18 +33,6 @@ export function AudioRecorder() {
   const [uploadedFile, setUploadedFile] = useState<File | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   
-  // Custom ticking clock state for HUD
-  const [currentTime, setCurrentTime] = useState("")
-  useEffect(() => {
-    const update = () => {
-      const d = new Date()
-      setCurrentTime(d.toLocaleTimeString('en-US', { hour12: false }))
-    }
-    update()
-    const interval = setInterval(update, 1000)
-    return () => clearInterval(interval)
-  }, [])
-
   async function handleStart() {
     await startMic(mode)
     startTimer()
@@ -127,7 +115,7 @@ export function AudioRecorder() {
   const showProcessButton = phase === "stopped" && (audioBlob || uploadedFile)
 
   return (
-    <div className="flex-1 flex flex-col lg:flex-row gap-6 p-6 lg:p-8 overflow-y-auto bg-[#0a0a0f] relative w-full">
+    <div className="flex-1 flex flex-col lg:flex-row gap-4 p-4 lg:p-6 overflow-hidden bg-[#0a0a0f] relative w-full">
       {/* Spotlight blur background */}
       <div className="absolute top-0 right-1/4 w-[500px] h-[500px] rounded-full bg-[var(--accent)]/5 blur-[120px] pointer-events-none" />
 
@@ -214,7 +202,7 @@ export function AudioRecorder() {
       </AnimatePresence>
 
       {/* LEFT COLUMN: THE CONCENTRIC SOUNDWAVE VISUAL CARD */}
-      <div className="flex-1 flex flex-col min-h-[400px] lg:min-h-0 bg-[#111118]/40 border border-[var(--border)] rounded-2xl p-8 overflow-hidden relative shadow-2xl backdrop-blur-md items-center justify-center">
+      <div className="flex-1 flex flex-col min-h-[300px] lg:min-h-0 bg-[#111118]/40 border border-[var(--border)] rounded-2xl p-6 overflow-hidden relative shadow-2xl backdrop-blur-md items-center justify-center">
         {/* Spotlight ambient glows */}
         <div className="absolute w-[350px] h-[350px] rounded-full bg-[var(--accent)]/10 blur-[90px] pointer-events-none animate-pulse-slow" />
         <div className="absolute w-[250px] h-[250px] rounded-full bg-[var(--accent2)]/5 blur-[70px] pointer-events-none animate-pulse-slow delay-1000" />
@@ -226,21 +214,11 @@ export function AudioRecorder() {
           <div className="w-[240px] h-[240px] rounded-full border border-[var(--accent)]/10 opacity-70" />
         </div>
 
-        {/* Digital Clock HUD Overlay in top corner */}
-        <div className="absolute top-6 left-6 flex items-center gap-2 px-3 py-1.5 rounded-lg border border-[var(--border)] bg-[#0d0d12]/90 text-xs font-mono text-[var(--text2)] shadow-sm">
-          <span className={`w-1.5 h-1.5 rounded-full ${phase === 'recording' ? 'bg-[var(--red)] animate-ping' : 'bg-[var(--green)] animate-pulse'}`} />
-          <span className="text-[var(--text3)] uppercase text-[9px] tracking-wider">
-            {phase === 'recording' ? 'REC' : 'LIVE'}
-          </span>
-          <span className="text-[var(--text3)]">|</span>
-          <span className="tracking-widest">{currentTime}</span>
-        </div>
-
-        {/* Recording active timer display in top-right corner */}
+        {/* Recording status indicator */}
         {phase === 'recording' && (
-          <div className="absolute top-6 right-6 flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--red)]/20 bg-[var(--red)]/5 text-xs font-mono text-[var(--red)] shadow-sm animate-pulse">
-            <Clock className="w-3.5 h-3.5" />
-            <span className="font-semibold tracking-widest">{formatted}</span>
+          <div className="absolute top-4 left-4 flex items-center gap-2 px-3 py-1.5 rounded-lg border border-[var(--red)]/30 bg-[var(--red)]/10 text-xs font-mono text-[var(--red)] shadow-sm">
+            <span className="w-1.5 h-1.5 rounded-full bg-[var(--red)] animate-ping" />
+            <span className="uppercase text-[9px] tracking-wider font-bold">Recording</span>
           </div>
         )}
 
@@ -272,30 +250,29 @@ export function AudioRecorder() {
       </div>
 
       {/* RIGHT COLUMN: COCKPIT CONTROLS & GIANT RECORD DIAL */}
-      <div className="w-full lg:w-[380px] flex-shrink-0 flex flex-col gap-6">
+      <div className="w-full lg:w-[360px] flex-shrink-0 flex flex-col gap-3 overflow-y-auto">
         
         {/* Card: Meeting Title Input */}
-        <div className="p-5 rounded-2xl border border-[var(--border)] bg-[#111118]/60 backdrop-blur-md shadow-lg relative group overflow-hidden focus-within:border-[var(--accent)]/50 focus-within:shadow-[var(--accent)]/5 transition-all">
-          <div className="absolute top-0 left-0 w-1.5 h-full bg-gradient-to-b from-[var(--accent)] to-[var(--accent2)]" />
-          <label className="text-[9px] font-bold uppercase tracking-widest text-[var(--text3)] block mb-1">
-            Meeting Session Title
-          </label>
-          <input
-            type="text"
-            value={meetingName}
-            disabled={phase === "recording"}
-            onChange={(e) => setMeetingName(e.target.value)}
-            className="w-full bg-transparent text-base font-semibold text-white placeholder:text-[var(--text3)] border-none outline-none focus:ring-0 p-0 disabled:opacity-60"
-            placeholder="New Meeting"
-          />
-          <p className="text-[9px] text-[var(--text3)] mt-2 font-mono" style={{ fontFamily: 'var(--font-mono)' }}>
-            Session date: {new Date().toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}
-          </p>
+        <div className="rounded-xl border border-[var(--border)] bg-[#111118]/60 backdrop-blur-md shadow-lg relative overflow-hidden focus-within:border-[var(--accent)]/50 transition-all flex items-stretch">
+          <div className="w-1 flex-shrink-0 bg-gradient-to-b from-[var(--accent)] to-[var(--accent2)]" />
+          <div className="flex-1 px-4 py-3">
+            <label className="text-[9px] font-bold uppercase tracking-widest text-[var(--text3)] block mb-1">
+              Meeting Session Title
+            </label>
+            <input
+              type="text"
+              value={meetingName}
+              disabled={phase === "recording"}
+              onChange={(e) => setMeetingName(e.target.value)}
+              className="w-full bg-transparent text-sm font-semibold text-white placeholder:text-[var(--text3)]/60 border-none outline-none focus:ring-0 p-0 disabled:opacity-60"
+              placeholder="New Meeting"
+            />
+          </div>
         </div>
 
         {/* Input Mode Selector Horizontal Glassmorphic Capsule */}
         {phase === "idle" && (
-          <div className="space-y-2.5">
+          <div className="space-y-1.5">
             <p className="text-[9px] font-bold uppercase tracking-widest text-[var(--text3)] px-1">
               Select Capture Source
             </p>
@@ -314,7 +291,7 @@ export function AudioRecorder() {
                     }
                   }}
                   className={`
-                    flex-1 flex flex-col sm:flex-row items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-semibold transition-all cursor-pointer
+                    flex-1 flex items-center justify-center gap-1.5 py-2 px-2 rounded-lg text-xs font-semibold transition-all cursor-pointer
                     ${mode === m.id
                       ? "bg-gradient-to-tr from-[var(--accent)]/15 to-[var(--accent2)]/10 text-white border border-[var(--accent)]/30 shadow-sm"
                       : "text-[var(--text3)] hover:text-[var(--text2)]"
@@ -322,7 +299,7 @@ export function AudioRecorder() {
                   `}
                 >
                   <m.icon className="w-3.5 h-3.5 flex-shrink-0" />
-                  <span className="hidden sm:inline">{m.label}</span>
+                  <span>{m.label}</span>
                 </button>
               ))}
             </div>
@@ -378,7 +355,7 @@ export function AudioRecorder() {
 
         {/* AI Strategy Settings Box (collapsible or floating) */}
         {(phase === "idle" || phase === "stopped") && (
-          <div className="p-5 rounded-2xl border border-[var(--border)] bg-[#111118]/60 backdrop-blur-md shadow-lg space-y-4">
+          <div className="p-4 rounded-xl border border-[var(--border)] bg-[#111118]/60 backdrop-blur-md shadow-lg space-y-3">
             <div className="flex items-center gap-2 pb-2.5 border-b border-[var(--border)]">
               <Sliders className="w-4 h-4 text-[var(--accent2)]" />
               <h3 className="text-xs font-bold text-white uppercase tracking-wider">AI Processing Strategy</h3>
@@ -456,7 +433,7 @@ export function AudioRecorder() {
 
         {/* GIANT CONCENTRIC PULSING RECORD DIAL ( Only when not in upload mode, or recording ) */}
         {mode !== 'upload' && (phase === "idle" || phase === "recording") && (
-          <div className="relative flex items-center justify-center py-6">
+          <div className="relative flex items-center justify-center py-4">
             {/* Ambient Pulsing Rings */}
             <AnimatePresence>
               {isRecording && (
@@ -552,17 +529,7 @@ export function AudioRecorder() {
           className="hidden"
         />
 
-        {/* Premium Note */}
-        <div className="mt-auto p-4 rounded-2xl bg-[#111118]/60 border border-[var(--border)] flex items-start gap-3 shadow-md relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-8 h-8 bg-[var(--accent2)]/5 rounded-full blur-md" />
-          <Zap className="w-4 h-4 text-[var(--accent)] flex-shrink-0 mt-0.5" />
-          <div>
-            <p className="text-[10px] font-bold text-white uppercase tracking-wide">Recall.ai Engine Settings</p>
-            <p className="text-[9px] text-[var(--text3)] mt-0.5 leading-relaxed">
-              Your audio file is structured, analyzed, and generated via custom cognitive models. Audio is transcribed with Whisper-v3 and segmented via Llama 3 models.
-            </p>
-          </div>
-        </div>
+
       </div>
     </div>
   )
