@@ -33,6 +33,18 @@ export function ModeSelector({ mode, onChange, onFileSelect }: ModeSelectorProps
     }
   }, [onFileSelect])
 
+  const handleDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+  }, [])
+
+  const handleDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    const file = e.dataTransfer.files?.[0]
+    if (file && onFileSelect) {
+      onFileSelect(file)
+    }
+  }, [onFileSelect])
+
   return (
     <div className="space-y-3">
       <p className="text-[10px] font-semibold uppercase tracking-widest text-[var(--text3)]">
@@ -61,6 +73,8 @@ export function ModeSelector({ mode, onChange, onFileSelect }: ModeSelectorProps
       {mode === 'upload' && (
         <div
           onClick={() => fileInputRef.current?.click()}
+          onDragOver={handleDragOver}
+          onDrop={handleDrop}
           className="border-2 border-dashed border-[var(--border2)] rounded-xl p-6 text-center cursor-pointer hover:border-[var(--accent)]/40 transition-colors"
         >
           <Upload className="w-6 h-6 mx-auto mb-2 text-[var(--text3)]" />

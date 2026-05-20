@@ -52,7 +52,7 @@ export function AudioRecorder() {
 
   async function handleProcess() {
     const blob = mode === "upload" && uploadedFile
-      ? new Blob([uploadedFile], { type: uploadedFile.type })
+      ? uploadedFile
       : audioBlob
 
     if (!blob) return
@@ -80,6 +80,13 @@ export function AudioRecorder() {
   }
 
   function handleFileSelect(file: File) {
+    const MAX_FILE_SIZE = 25 * 1024 * 1024; // 25MB Groq Whisper boundary limit
+    if (file.size > MAX_FILE_SIZE) {
+      toast.error("File too large", { 
+        description: `Maximum size allowed is 25MB. This file is ${(file.size / 1024 / 1024).toFixed(1)}MB.` 
+      });
+      return;
+    }
     setUploadedFile(file)
     setPhase("stopped")
     toast.success("File uploaded", { description: file.name })
