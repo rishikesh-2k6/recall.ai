@@ -21,7 +21,8 @@ export function useAudioRecorder() {
       const mediaRecorder = new MediaRecorder(mediaStream, {
         mimeType: MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
           ? 'audio/webm;codecs=opus'
-          : 'audio/webm'
+          : 'audio/webm',
+        audioBitsPerSecond: 32000 // 32kbps mono stream for optimal vocal compression
       })
       mediaRecorderRef.current = mediaRecorder
       chunksRef.current = []

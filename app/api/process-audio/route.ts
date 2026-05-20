@@ -14,6 +14,8 @@ const nvidia = new OpenAI({
   baseURL: "https://integrate.api.nvidia.com/v1",
 });
 
+export const maxDuration = 60; // Max allowed serverless timeout on Vercel Hobby tier (60s)
+
 export async function POST(req: NextRequest) {
   try {
     const supabaseAuth = await createClient();
@@ -26,6 +28,12 @@ export async function POST(req: NextRequest) {
     const formData = await req.formData();
     const file = formData.get("audio") as File;
     const name = formData.get("name") as string || "New Meeting";
+    
+    // Extract settings parameters
+    const diarize = formData.get("diarize") === "true";
+    const actions = formData.get("actions") !== "false";
+    const languageSetting = formData.get("language") as string || "auto";
+    const styleSetting = formData.get("style") as string || "detailed";
     
     if (!file) {
       return NextResponse.json({ error: "No audio file provided" }, { status: 400 });
@@ -51,6 +59,7 @@ export async function POST(req: NextRequest) {
       file,
       model: "whisper-large-v3",
       response_format: "verbose_json",
+      language: languageSetting !== "auto" ? languageSetting : undefined,
     });
     
     // Map verbose_json output to transcript format
@@ -73,9 +82,13 @@ export async function POST(req: NextRequest) {
     // H-5: Split into system and user prompts to prevent prompt injection attacks
     const systemPrompt = `You are a professional meeting note-taking assistant. Your job is to analyze the provided meeting transcript and output a strict JSON response.
     
+    CRITICAL INSTRUCTIONS:
+    1. Summarize and format the "tldr" summary strictly in a ${styleSetting} style (e.g. if brief, write 1-2 sentence summary; if detailed, write a comprehensive multi-paragraph description; if bullet, write clean bullet-points).
+    2. ${actions ? "Extract action items and priority checklists from the transcript." : "Do NOT extract any action items. The \"actionItems\" array in the output MUST be completely empty ([ ])."}
+    
     You must output a strict JSON response with the following structure:
     {
-      "tldr": "A 2-3 sentence summary of the meeting.",
+      "tldr": "The formatted summary of the meeting.",
       "keyQuote": "The most important or impactful quote from the transcript.",
       "actionItems": [
         { "text": "Task description", "assignee": "Name or null", "priority": "high|medium|low" }
