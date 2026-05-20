@@ -8,8 +8,8 @@ import { toast } from "sonner"
 interface SettingsModalProps {
   open: boolean
   onClose: () => void
-  theme: "dark" | "light"
-  onThemeChange: (theme: "dark" | "light") => void
+  theme: "dark" | "light" | "system"
+  onThemeChange: (theme: "dark" | "light" | "system") => void
 }
 
 const TABS = [
@@ -114,21 +114,22 @@ export function SettingsModal({ open, onClose, theme, onThemeChange }: SettingsM
                     <div className="space-y-5">
                       <Section title="Appearance">
                         <p className="text-xs text-[var(--text3)] mb-3">Choose your preferred color theme.</p>
-                        <div className="grid grid-cols-2 gap-2">
+                        <div className="grid grid-cols-3 gap-2">
                           {([
-                            { value: "dark", label: "Dark", icon: Moon },
-                            { value: "light", label: "Light", icon: Sun },
+                            { value: "dark",   label: "Dark",   icon: Moon },
+                            { value: "light",  label: "Light",  icon: Sun },
+                            { value: "system", label: "System", icon: Monitor },
                           ] as const).map(({ value, label, icon: Icon }) => (
                             <button
                               key={value}
                               onClick={() => onThemeChange(value)}
-                              className={`flex items-center gap-2.5 px-4 py-3 rounded-xl border text-sm font-medium transition-all ${
+                              className={`flex flex-col items-center gap-2 px-3 py-3 rounded-xl border text-xs font-medium transition-all ${
                                 theme === value
                                   ? "border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--accent)]"
                                   : "border-[var(--border)] text-[var(--text2)] hover:border-[var(--border2)] hover:text-[var(--text)]"
                               }`}
                             >
-                              <Icon className="w-4 h-4" />
+                              <Icon className="w-5 h-5" />
                               {label}
                             </button>
                           ))}

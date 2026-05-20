@@ -115,7 +115,7 @@ export function AudioRecorder() {
   const showProcessButton = phase === "stopped" && (audioBlob || uploadedFile)
 
   return (
-    <div className="flex-1 flex flex-col lg:flex-row gap-4 p-4 lg:p-6 overflow-hidden bg-[#0a0a0f] relative w-full">
+    <div className="flex-1 flex flex-col lg:flex-row gap-4 p-4 lg:p-6 overflow-hidden bg-[var(--bg)] relative w-full">
       {/* Spotlight blur background */}
       <div className="absolute top-0 right-1/4 w-[500px] h-[500px] rounded-full bg-[var(--accent)]/5 blur-[120px] pointer-events-none" />
 
@@ -126,16 +126,16 @@ export function AudioRecorder() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute inset-0 z-50 bg-[#0a0a0f]/95 backdrop-blur-lg flex flex-col items-center justify-center p-6"
+            className="absolute inset-0 z-50 bg-[var(--bg)]/95 backdrop-blur-lg flex flex-col items-center justify-center p-6"
           >
-            <div className="w-full max-w-md space-y-6 p-8 rounded-2xl border border-[var(--border)] bg-[#111118]/80 relative overflow-hidden shadow-2xl">
+            <div className="w-full max-w-md space-y-6 p-8 rounded-2xl border border-[var(--border)] bg-[var(--bg2)]/80 relative overflow-hidden shadow-2xl">
               <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[var(--accent)] to-[var(--accent2)] animate-pulse" />
               
               <div className="text-center space-y-2">
                 <div className="inline-flex p-3 rounded-full bg-[var(--accent)]/10 text-[var(--accent)] mb-2 animate-bounce">
                   <Sparkles className="w-6 h-6" />
                 </div>
-                <h3 className="text-xl font-bold text-white font-serif" style={{ fontFamily: 'var(--font-serif)' }}>
+                <h3 className="text-xl font-bold text-[var(--text)] font-serif" style={{ fontFamily: 'var(--font-serif)' }}>
                   Synthesizing Meeting Notes
                 </h3>
                 <p className="text-xs text-[var(--text3)]">
@@ -202,7 +202,7 @@ export function AudioRecorder() {
       </AnimatePresence>
 
       {/* LEFT COLUMN: THE CONCENTRIC SOUNDWAVE VISUAL CARD */}
-      <div className="flex-1 flex flex-col min-h-[300px] lg:min-h-0 bg-[#111118]/40 border border-[var(--border)] rounded-2xl p-6 overflow-hidden relative shadow-2xl backdrop-blur-md items-center justify-center">
+      <div className="flex-1 flex flex-col min-h-[300px] lg:min-h-0 bg-[var(--bg2)]/40 border border-[var(--border)] rounded-2xl p-6 overflow-hidden relative shadow-2xl backdrop-blur-md items-center justify-center">
         {/* Spotlight ambient glows */}
         <div className="absolute w-[350px] h-[350px] rounded-full bg-[var(--accent)]/10 blur-[90px] pointer-events-none animate-pulse-slow" />
         <div className="absolute w-[250px] h-[250px] rounded-full bg-[var(--accent2)]/5 blur-[70px] pointer-events-none animate-pulse-slow delay-1000" />
@@ -228,7 +228,7 @@ export function AudioRecorder() {
             <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-[var(--accent2)]">
               {phase === "recording" ? "STREAMING FREQUENCIES" : "RECORDER READY STATE"}
             </span>
-            <h2 className="text-2xl font-semibold text-white font-serif" style={{ fontFamily: 'var(--font-serif)' }}>
+            <h2 className="text-2xl font-semibold text-[var(--text)] font-serif" style={{ fontFamily: 'var(--font-serif)' }}>
               {phase === "recording" ? "Capturing Media..." : "Recall.ai Workspace"}
             </h2>
           </div>
@@ -253,7 +253,7 @@ export function AudioRecorder() {
       <div className="w-full lg:w-[360px] flex-shrink-0 flex flex-col gap-3 overflow-y-auto">
         
         {/* Card: Meeting Title Input */}
-        <div className="rounded-xl border border-[var(--border)] bg-[#111118]/60 backdrop-blur-md shadow-lg relative overflow-hidden focus-within:border-[var(--accent)]/50 transition-all flex items-stretch">
+        <div className="rounded-xl border border-[var(--border)] bg-[var(--bg2)]/60 backdrop-blur-md shadow-lg relative overflow-hidden focus-within:border-[var(--accent)]/50 transition-all flex items-stretch">
           <div className="w-1 flex-shrink-0 bg-gradient-to-b from-[var(--accent)] to-[var(--accent2)]" />
           <div className="flex-1 px-4 py-3">
             <label className="text-[9px] font-bold uppercase tracking-widest text-[var(--text3)] block mb-1">
@@ -264,7 +264,7 @@ export function AudioRecorder() {
               value={meetingName}
               disabled={phase === "recording"}
               onChange={(e) => setMeetingName(e.target.value)}
-              className="w-full bg-transparent text-sm font-semibold text-white placeholder:text-[var(--text3)]/60 border-none outline-none focus:ring-0 p-0 disabled:opacity-60"
+              className="w-full bg-transparent text-sm font-semibold text-[var(--text)] placeholder:text-[var(--text3)]/60 border-none outline-none focus:ring-0 p-0 disabled:opacity-60"
               placeholder="New Meeting"
             />
           </div>
@@ -276,7 +276,7 @@ export function AudioRecorder() {
             <p className="text-[9px] font-bold uppercase tracking-widest text-[var(--text3)] px-1">
               Select Capture Source
             </p>
-            <div className="flex p-1 rounded-xl bg-[#111118]/80 border border-[var(--border)] shadow-md">
+            <div className="flex p-1 rounded-xl bg-[var(--bg2)]/80 border border-[var(--border)] shadow-md">
               {[
                 { id: 'mic' as const, icon: Mic, label: 'Microphone' },
                 { id: 'upload' as const, icon: Upload, label: 'File Upload' },
@@ -315,7 +315,7 @@ export function AudioRecorder() {
             className="border-2 border-dashed border-[var(--border2)] rounded-2xl p-6 text-center cursor-pointer hover:border-[var(--accent2)]/40 hover:bg-[var(--accent2)]/5 transition-all"
           >
             <Upload className="w-8 h-8 mx-auto mb-2 text-[var(--accent2)] animate-pulse" />
-            <p className="text-sm font-semibold text-white">Click or Drag & Drop File</p>
+            <p className="text-sm font-semibold text-[var(--text)]">Click or Drag & Drop File</p>
             <p className="text-xs text-[var(--text3)] mt-1">Accepts MP3, WAV, M4A, WEBM, MP4</p>
           </div>
         )}
@@ -336,7 +336,7 @@ export function AudioRecorder() {
             <div className="flex items-center gap-2 truncate">
               <span className="text-lg">📎</span>
               <div className="truncate">
-                <p className="font-semibold text-white truncate">{uploadedFile.name}</p>
+                <p className="font-semibold text-[var(--text)] truncate">{uploadedFile.name}</p>
                 <p className="text-[10px] text-[var(--text3)] font-mono">{(uploadedFile.size / 1024 / 1024).toFixed(1)} MB</p>
               </div>
             </div>
@@ -345,7 +345,7 @@ export function AudioRecorder() {
                 setUploadedFile(null)
                 setPhase("idle")
               }}
-              className="text-[var(--text3)] hover:text-white transition-colors"
+              className="text-[var(--text3)] hover:text-[var(--text)] transition-colors"
               title="Remove file"
             >
               ×
@@ -355,10 +355,10 @@ export function AudioRecorder() {
 
         {/* AI Strategy Settings Box (collapsible or floating) */}
         {(phase === "idle" || phase === "stopped") && (
-          <div className="p-4 rounded-xl border border-[var(--border)] bg-[#111118]/60 backdrop-blur-md shadow-lg space-y-3">
+          <div className="p-4 rounded-xl border border-[var(--border)] bg-[var(--bg2)]/60 backdrop-blur-md shadow-lg space-y-3">
             <div className="flex items-center gap-2 pb-2.5 border-b border-[var(--border)]">
               <Sliders className="w-4 h-4 text-[var(--accent2)]" />
-              <h3 className="text-xs font-bold text-white uppercase tracking-wider">AI Processing Strategy</h3>
+              <h3 className="text-xs font-bold text-[var(--text)] uppercase tracking-wider">AI Processing Strategy</h3>
             </div>
 
             {/* Toggle checkboxes */}
@@ -368,10 +368,10 @@ export function AudioRecorder() {
                   type="checkbox"
                   checked={settings.diarize}
                   onChange={(e) => setSettings(prev => ({ ...prev, diarize: e.target.checked }))}
-                  className="rounded border-[var(--border)] text-[var(--accent)] focus:ring-[var(--accent)]/50 bg-[#0d0d12] w-4 h-4"
+                  className="rounded border-[var(--border)] text-[var(--accent)] focus:ring-[var(--accent)]/50 bg-[var(--bg)] w-4 h-4"
                 />
                 <div>
-                  <p className="text-xs font-semibold text-white group-hover:text-[var(--accent)] transition-colors">
+                  <p className="text-xs font-semibold text-[var(--text)] group-hover:text-[var(--accent)] transition-colors">
                     Speaker Diarization
                   </p>
                   <p className="text-[10px] text-[var(--text3)]">De-noise and group by speaker voice</p>
@@ -383,10 +383,10 @@ export function AudioRecorder() {
                   type="checkbox"
                   checked={settings.actions}
                   onChange={(e) => setSettings(prev => ({ ...prev, actions: e.target.checked }))}
-                  className="rounded border-[var(--border)] text-[var(--accent)] focus:ring-[var(--accent)]/50 bg-[#0d0d12] w-4 h-4"
+                  className="rounded border-[var(--border)] text-[var(--accent)] focus:ring-[var(--accent)]/50 bg-[var(--bg)] w-4 h-4"
                 />
                 <div>
-                  <p className="text-xs font-semibold text-white group-hover:text-[var(--accent)] transition-colors">
+                  <p className="text-xs font-semibold text-[var(--text)] group-hover:text-[var(--accent)] transition-colors">
                     Action Items Extraction
                   </p>
                   <p className="text-[10px] text-[var(--text3)]">Auto-assign tasks and priorities</p>
@@ -403,7 +403,7 @@ export function AudioRecorder() {
                 <select
                   value={settings.language}
                   onChange={(e) => setSettings(prev => ({ ...prev, language: e.target.value }))}
-                  className="w-full px-2 py-1.5 rounded-lg bg-[#0d0d12] border border-[var(--border)] text-xs text-white outline-none focus:border-[var(--accent)]/50 font-medium"
+                  className="w-full px-2 py-1.5 rounded-lg bg-[var(--bg)] border border-[var(--border)] text-xs text-[var(--text)] outline-none focus:border-[var(--accent)]/50 font-medium"
                 >
                   <option value="en">English (US)</option>
                   <option value="hi">Hindi (IN)</option>
@@ -420,7 +420,7 @@ export function AudioRecorder() {
                 <select
                   value={settings.style}
                   onChange={(e) => setSettings(prev => ({ ...prev, style: e.target.value }))}
-                  className="w-full px-2 py-1.5 rounded-lg bg-[#0d0d12] border border-[var(--border)] text-xs text-white outline-none focus:border-[var(--accent)]/50 font-medium"
+                  className="w-full px-2 py-1.5 rounded-lg bg-[var(--bg)] border border-[var(--border)] text-xs text-[var(--text)] outline-none focus:border-[var(--accent)]/50 font-medium"
                 >
                   <option value="detailed">Executive Brief</option>
                   <option value="bullet">Bullet Points</option>
@@ -511,7 +511,7 @@ export function AudioRecorder() {
               
               <button
                 onClick={handleReRecord}
-                className="w-full py-2.5 px-4 rounded-xl border border-[var(--border)] text-xs text-[var(--text3)] hover:text-white hover:bg-[#111118]/60 transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                className="w-full py-2.5 px-4 rounded-xl border border-[var(--border)] text-xs text-[var(--text3)] hover:text-[var(--text)] hover:bg-[var(--bg2)]/60 transition-all cursor-pointer flex items-center justify-center gap-1.5"
               >
                 <RotateCcw className="w-3.5 h-3.5" />
                 Start Over / Discard

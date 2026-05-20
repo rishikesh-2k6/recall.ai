@@ -2,55 +2,70 @@
 
 import { createContext, useContext, useEffect, useState } from "react"
 
-type Theme = "dark" | "light"
+export type Theme = "dark" | "light" | "system"
 
 interface ThemeContextValue {
   theme: Theme
   setTheme: (t: Theme) => void
-  toggle: () => void
+  resolvedTheme: "dark" | "light"   // the actual applied theme
 }
 
 const ThemeContext = createContext<ThemeContextValue>({
-  theme: "dark",
+  theme: "system",
   setTheme: () => {},
-  toggle: () => {},
+  resolvedTheme: "dark",
 })
 
-export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>("dark")
+function getOSTheme(): "dark" | "light" {
+  if (typeof window === "undefined") return "dark"
+  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"
+}
 
-  // Load persisted preference
-  useEffect(() => {
-    const saved = localStorage.getItem("verbatim-theme") as Theme | null
-    if (saved === "light" || saved === "dark") {
-      setThemeState(saved)
-      applyTheme(saved)
-    }
-  }, [])
-
-  function applyTheme(t: Theme) {
-    const root = document.documentElement
-    if (t === "light") {
-      root.classList.add("light")
-      root.classList.remove("dark")
-    } else {
-      root.classList.remove("light")
-      root.classList.add("dark")
-    }
+function applyTheme(t: Theme): "dark" | "light" {
+  const root = document.documentElement
+  const resolved: "dark" | "light" = t === "system" ? getOSTheme() : t
+  if (resolved === "light") {
+    root.classList.add("light")
+    root.classList.remove("dark")
+  } else {
+    root.classList.remove("light")
+    root.classList.add("dark")
   }
+  return resolved
+}
+
+export function ThemeProvider({ children }: { children: React.ReactNode }) {
+  const [theme, setThemeState] = useState<Theme>("system")
+  const [resolvedTheme, setResolvedTheme] = useState<"dark" | "light">("dark")
+
+  // On mount: read persisted preference, apply it, set up OS listener
+  useEffect(() => {
+    const saved = localStorage.getItem("recall-theme") as Theme | null
+    const initial: Theme =
+      saved === "dark" || saved === "light" || saved === "system" ? saved : "system"
+    setThemeState(initial)
+    setResolvedTheme(applyTheme(initial))
+
+    // When OS changes, re-apply if current choice is "system"
+    const mq = window.matchMedia("(prefers-color-scheme: dark)")
+    const handleOSChange = () => {
+      const current = (localStorage.getItem("recall-theme") as Theme | null) ?? "system"
+      if (current === "system") {
+        setResolvedTheme(applyTheme("system"))
+      }
+    }
+    mq.addEventListener("change", handleOSChange)
+    return () => mq.removeEventListener("change", handleOSChange)
+  }, [])
 
   function setTheme(t: Theme) {
     setThemeState(t)
-    applyTheme(t)
-    localStorage.setItem("verbatim-theme", t)
-  }
-
-  function toggle() {
-    setTheme(theme === "dark" ? "light" : "dark")
+    setResolvedTheme(applyTheme(t))
+    localStorage.setItem("recall-theme", t)
   }
 
   return (
-    <ThemeContext.Provider value={{ theme, setTheme, toggle }}>
+    <ThemeContext.Provider value={{ theme, setTheme, resolvedTheme }}>
       {children}
     </ThemeContext.Provider>
   )
