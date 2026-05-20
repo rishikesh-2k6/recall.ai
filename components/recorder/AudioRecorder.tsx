@@ -22,7 +22,7 @@ export function AudioRecorder() {
   const { start: startTimer, stop: stopTimer, reset: resetTimer } = useTimer()
   const { process, steps, error: processError } = useProcessAudio()
 
-  const [meetingName, setMeetingName] = useState("New Meeting")
+
   const [mode, setMode] = useState<RecorderMode>("mic")
   const [settings, setSettings] = useState<SettingsType>({
     diarize: true,
@@ -63,7 +63,7 @@ export function AudioRecorder() {
 
     setPhase("processing")
     setProcessingSteps(steps)
-    const result = await process(blob, settings, meetingName)
+    const result = await process(blob, settings, "New Meeting")
     if (result) {
       setResult(result)
       setPhase("complete")
@@ -252,23 +252,7 @@ export function AudioRecorder() {
       {/* RIGHT COLUMN: COCKPIT CONTROLS & GIANT RECORD DIAL */}
       <div className="w-full lg:w-[360px] flex-shrink-0 flex flex-col gap-3 overflow-y-auto">
         
-        {/* Card: Meeting Title Input */}
-        <div className="rounded-xl border border-[var(--border)] bg-[var(--bg2)]/60 backdrop-blur-md shadow-lg relative overflow-hidden focus-within:border-[var(--accent)]/50 transition-all flex items-stretch">
-          <div className="w-1 flex-shrink-0 bg-gradient-to-b from-[var(--accent)] to-[var(--accent2)]" />
-          <div className="flex-1 px-4 py-3">
-            <label className="text-[9px] font-bold uppercase tracking-widest text-[var(--text3)] block mb-1">
-              Meeting Session Title
-            </label>
-            <input
-              type="text"
-              value={meetingName}
-              disabled={phase === "recording"}
-              onChange={(e) => setMeetingName(e.target.value)}
-              className="w-full bg-transparent text-sm font-semibold text-[var(--text)] placeholder:text-[var(--text3)]/60 border-none outline-none focus:ring-0 p-0 disabled:opacity-60"
-              placeholder="New Meeting"
-            />
-          </div>
-        </div>
+
 
         {/* Input Mode Selector Horizontal Glassmorphic Capsule */}
         {phase === "idle" && (

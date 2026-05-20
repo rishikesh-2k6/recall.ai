@@ -94,7 +94,7 @@ export async function POST(req: NextRequest) {
 
     const formData = await req.formData();
     const file = formData.get("audio") as File;
-    const name = formData.get("name") as string || "New Meeting";
+    let name = formData.get("name") as string || "New Meeting";
     
     // Extract settings parameters
     const diarize = formData.get("diarize") === "true";
@@ -162,9 +162,11 @@ export async function POST(req: NextRequest) {
        - "Brainstorming Session"
        - "General Discussion"
        If none of the above fit perfectly, you may generate a concise custom category (max 3 words, e.g., "Board Meeting", "Product Review", "Design Sync").
+    4. Choose an appropriate, highly descriptive, and professional title for the session/meeting based on the transcript's context (max 6 words). Avoid generic names like "Session" or "Meeting" or "Lecture" unless combined with a specific topic (e.g. "Next.js Architecture Sync" or "Intro to Quantum Mechanics"). If the transcript is extremely short, generic, or empty, default to "Audio Note".
     
     You must output a strict JSON response with the following structure:
     {
+      "title": "A highly descriptive, concise, and professional title (max 6 words).",
       "tldr": "The formatted summary of the meeting.",
       "keyQuote": "The most important or impactful quote from the transcript.",
       "actionItems": [
@@ -198,6 +200,7 @@ export async function POST(req: NextRequest) {
 
 
     const LLMResultSchema = z.object({
+      title: z.string().default("New Session"),
       tldr: z.string().default("No summary generated."),
       keyQuote: z.string().default(""),
       actionItems: z.array(z.object({
@@ -217,6 +220,9 @@ export async function POST(req: NextRequest) {
     try {
       const rawJson = JSON.parse(completion.choices[0].message.content || "{}");
       llmResult = LLMResultSchema.parse(rawJson);
+      if (llmResult.title && llmResult.title !== "New Session") {
+        name = llmResult.title;
+      }
     } catch (parseError) {
       console.error("LLM JSON Parse Error:", parseError);
       llmResult = LLMResultSchema.parse({}); // Fallback to safe defaults if LLM hallucinates

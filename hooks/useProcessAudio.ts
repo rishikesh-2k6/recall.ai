@@ -104,8 +104,8 @@ export function useProcessAudio() {
       
       const fallbackData: MeetingResult = {
         ...MOCK_MEETING,
-        name: meetingName || MOCK_MEETING.name,
-        suggestedTitle: meetingName !== "New Meeting" ? `${meetingName} — Feature Prioritization` : MOCK_MEETING.suggestedTitle
+        name: "AI Generated Meeting Title",
+        suggestedTitle: "AI Generated Meeting Title"
       }
       
       setSteps(prev => prev.map(s => ({ ...s, state: 'done' as const })))
