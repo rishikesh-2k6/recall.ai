@@ -7,15 +7,16 @@ import {
   Mic, Clock, Settings, Menu, X,
   Smile, Frown, HelpCircle,
   PanelLeftClose, PanelLeftOpen,
-  Search, Pin, Trash2
+  Search, Pin, Trash2, Archive, Star
 } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { SettingsModal } from "./SettingsModal"
 import { useTheme } from "@/contexts/theme-context"
 
 const NAV_ITEMS = [
-  { label: "Record",   icon: Mic,   href: "/dashboard" },
-  { label: "Meetings", icon: Clock, href: "/meetings" },
+  { label: "Record",   icon: Mic,     href: "/dashboard" },
+  { label: "Meetings", icon: Clock,   href: "/meetings" },
+  { label: "Archive",  icon: Archive, href: "/archive" },
 ]
 
 const SENTIMENT_ICONS: Record<string, { icon: React.ElementType; color: string }> = {
@@ -109,7 +110,8 @@ export function Sidebar() {
   }
 
   const filteredMeetings = meetings.filter(m =>
-    m.name.toLowerCase().includes(searchQuery.toLowerCase())
+    m.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
+    !m.insights?.is_archived
   )
 
   const pinnedMeetings = filteredMeetings.filter(m => pinnedIds.includes(m.id))
@@ -202,7 +204,7 @@ export function Sidebar() {
                   <Mic className="w-3.5 h-3.5 text-white" />
                 </div>
                 <span className="font-bold text-[var(--text)] text-sm tracking-tight" style={{ fontFamily: "var(--font-serif)" }}>
-                  Verbatim
+                  Recall<span className="text-[var(--accent2)] font-light">.ai</span>
                 </span>
               </motion.div>
             ) : (
@@ -380,13 +382,16 @@ export function Sidebar() {
 
           {/* User pill — expanded only */}
           {!collapsed && (
-            <div className="flex items-center gap-2.5 px-3 py-2 mt-1 rounded-lg bg-[var(--bg3)]/50">
-              <div className="w-6 h-6 rounded-full bg-[var(--accent)]/25 flex items-center justify-center text-[10px] font-bold text-[var(--accent)] flex-shrink-0">
+            <div className="flex items-center gap-2.5 px-3 py-2 mt-1 rounded-lg bg-gradient-to-r from-purple-950/20 to-indigo-950/20 border border-purple-500/10 shadow-[0_0_15px_rgba(165,148,249,0.05)]">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[var(--accent)] to-[var(--accent2)] flex items-center justify-center text-xs font-bold text-white flex-shrink-0 border border-white/10 shadow-[0_0_10px_rgba(124,110,240,0.3)]">
                 R
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-medium text-[var(--text)] truncate leading-tight">Rishikesh</p>
-                <p className="text-[10px] text-[var(--text3)] leading-tight">Free Plan</p>
+                <p className="text-xs font-semibold text-[var(--text)] truncate leading-tight">Rishikesh</p>
+                <div className="flex items-center gap-1 mt-0.5">
+                  <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400 animate-pulse" />
+                  <span className="text-[9px] font-bold text-amber-400 tracking-wider uppercase">Premium</span>
+                </div>
               </div>
             </div>
           )}
@@ -407,7 +412,9 @@ export function Sidebar() {
                 <div className="w-7 h-7 rounded-md bg-[var(--accent)] flex items-center justify-center">
                   <Mic className="w-3.5 h-3.5 text-white" />
                 </div>
-                <span className="font-bold text-[var(--text)] text-sm" style={{ fontFamily: "var(--font-serif)" }}>Verbatim</span>
+                <span className="font-bold text-[var(--text)] text-sm tracking-tight" style={{ fontFamily: "var(--font-serif)" }}>
+                  Recall<span className="text-[var(--accent2)] font-light">.ai</span>
+                </span>
               </div>
               <button onClick={() => setMobileOpen(false)} className="p-1.5 rounded-lg text-[var(--text3)] hover:bg-[var(--bg3)] transition-colors">
                 <X className="w-4 h-4" />

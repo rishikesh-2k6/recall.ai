@@ -12,10 +12,10 @@ export function Topbar() {
       {/* Left: app name */}
       <div className="flex items-center gap-3">
         <h1
-          className="text-lg font-semibold text-[var(--text)] tracking-tight"
+          className="text-lg font-bold text-[var(--text)] tracking-tight"
           style={{ fontFamily: 'var(--font-serif)' }}
         >
-          Verbatim
+          Recall<span className="text-[var(--accent2)] font-light">.ai</span>
         </h1>
       </div>
 
@@ -30,12 +30,12 @@ export function Topbar() {
         )}
 
         {/* Model badges */}
-        <div className="hidden sm:flex items-center gap-2">
-          <span className="px-2 py-1 rounded text-[10px] font-mono font-medium bg-[var(--accent)]/10 text-[var(--accent)] border border-[var(--accent)]/20">
-            Whisper-v3
+        <div className="hidden sm:flex items-center gap-3">
+          <span className="px-3 py-1 rounded-full text-[10px] font-mono font-semibold bg-[var(--accent)]/15 text-[var(--accent2)] border border-[var(--accent)]/30 shadow-[0_0_12px_rgba(124,110,240,0.25)] transition-all hover:scale-105">
+            ✨ Whisper-v3
           </span>
-          <span className="px-2 py-1 rounded text-[10px] font-mono font-medium bg-[var(--green)]/10 text-[var(--green)] border border-[var(--green)]/20">
-            Llama 3
+          <span className="px-3 py-1 rounded-full text-[10px] font-mono font-semibold bg-[var(--green)]/15 text-[var(--green)] border border-[var(--green)]/30 shadow-[0_0_12px_rgba(74,222,128,0.25)] transition-all hover:scale-105">
+            🤖 Llama 3
           </span>
         </div>
 

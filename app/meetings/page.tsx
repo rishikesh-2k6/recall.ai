@@ -3,8 +3,9 @@
 import React, { useState, useEffect } from "react"
 import Link from "next/link"
 import { motion, AnimatePresence } from "framer-motion"
-import { Clock, Users, FileText, ChevronRight, Search, Smile, Frown, HelpCircle, Sparkles, Send, Trash2 } from "lucide-react"
+import { Clock, Users, FileText, ChevronRight, Search, Smile, Frown, HelpCircle, Sparkles, Send, Trash2, Archive } from "lucide-react"
 import { formatMinSec } from "@/lib/utils"
+import { toast } from "sonner"
 
 const SENTIMENT_ICONS: Record<string, { icon: React.ElementType; color: string }> = {
   aligned:   { icon: Smile, color: 'var(--green)' },
@@ -52,12 +53,41 @@ export default function MeetingsPage() {
       if (res.ok) {
         setAllMeetings(prev => prev.filter(m => m.id !== meetingId))
         window.dispatchEvent(new CustomEvent("meetings-updated"))
+        toast.success("Meeting deleted")
       } else {
-        alert("Failed to delete meeting.")
+        toast.error("Failed to delete meeting.")
       }
     } catch (err) {
       console.error(err)
-      alert("An error occurred while deleting the meeting.")
+      toast.error("An error occurred while deleting the meeting.")
+    }
+  }
+
+  async function handleQuickArchive(meetingId: string, e: React.MouseEvent) {
+    e.preventDefault()
+    e.stopPropagation()
+    try {
+      const res = await fetch(`/api/meetings/${meetingId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          insights: {
+            is_archived: true
+          }
+        })
+      })
+      if (res.ok) {
+        setAllMeetings(prev => prev.filter(m => m.id !== meetingId))
+        window.dispatchEvent(new CustomEvent("meetings-updated"))
+        toast.success("Meeting archived", {
+          description: "Found under the Archive tab."
+        })
+      } else {
+        toast.error("Failed to archive meeting.")
+      }
+    } catch (err) {
+      console.error(err)
+      toast.error("An error occurred.")
     }
   }
 
@@ -83,6 +113,7 @@ export default function MeetingsPage() {
 
   const meetings = allMeetings
     .filter(m => {
+      if (m.insights?.is_archived) return false
       if (search && !m.name.toLowerCase().includes(search.toLowerCase())) return false
       if (filterSentiment && m.insights?.sentiment && m.insights.sentiment !== filterSentiment) return false
       return true
@@ -208,7 +239,7 @@ export default function MeetingsPage() {
             >
               <Link
                 href={`/meetings/${meeting.id}`}
-                className="block p-5 rounded-xl bg-[var(--card)] border border-[var(--border)] hover:border-[var(--accent)]/20 hover:bg-[var(--card2)] transition-all pr-14 group"
+                className="block p-5 rounded-xl bg-[var(--card)] border border-[var(--border)] hover:border-[var(--accent)]/20 hover:bg-[var(--card2)] transition-all pr-24 group"
               >
                 <div className="flex items-start justify-between gap-4">
                   {/* Left: name + meta */}
@@ -279,6 +310,13 @@ export default function MeetingsPage() {
                   </div>
                 )}
               </Link>
+              <button
+                onClick={(e) => handleQuickArchive(meeting.id, e)}
+                className="absolute right-[5.5rem] top-5 p-1.5 rounded-lg border border-[var(--border)] bg-[var(--card)] text-[var(--text3)] hover:text-[var(--accent)] hover:bg-[var(--accent)]/10 opacity-0 group-hover:opacity-100 transition-all z-10"
+                title="Archive meeting"
+              >
+                <Archive className="w-4 h-4" />
+              </button>
               <button
                 onClick={(e) => handleDelete(meeting.id, e)}
                 className="absolute right-12 top-5 p-1.5 rounded-lg border border-[var(--border)] bg-[var(--card)] text-[var(--text3)] hover:text-[var(--red)] hover:bg-[var(--red)]/10 opacity-0 group-hover:opacity-100 transition-all z-10"

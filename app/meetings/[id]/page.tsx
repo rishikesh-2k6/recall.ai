@@ -1,10 +1,10 @@
 "use client"
 
-import { useParams } from "next/navigation"
+import { useParams, useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { motion } from "framer-motion"
-import { ArrowLeft, Download, Clock, Users, FileText, CheckSquare } from "lucide-react"
+import { ArrowLeft, Clock, Users, FileText, CheckSquare, Archive, Trash2 } from "lucide-react"
 import { formatMinSec } from "@/lib/utils"
 import { StatsRow } from "@/components/results/StatsRow"
 import { SpeakerChips } from "@/components/results/SpeakerChips"
@@ -15,13 +15,65 @@ import { InsightsPanel } from "@/components/results/InsightsPanel"
 import { ExportDropdown } from "@/components/shared/ExportDropdown"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { FileText as FileTextIcon, MessageSquare, Lightbulb } from "lucide-react"
+import { toast } from "sonner"
 
 export default function MeetingDetailPage() {
   const params = useParams()
+  const router = useRouter()
   const id = params?.id as string
 
   const [meeting, setMeeting] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [isArchiving, setIsArchiving] = useState(false)
+
+  const handleToggleArchive = async () => {
+    setIsArchiving(true)
+    const newArchivedState = !meeting.insights?.is_archived
+    try {
+      const res = await fetch(`/api/meetings/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          insights: {
+            is_archived: newArchivedState
+          }
+        })
+      })
+      if (res.ok) {
+        const updated = await res.json()
+        setMeeting(updated)
+        window.dispatchEvent(new CustomEvent("meetings-updated"))
+        toast.success(newArchivedState ? "Meeting archived" : "Meeting restored", {
+          description: newArchivedState ? "Found under the Archive tab." : "Found under the Meetings tab."
+        })
+      } else {
+        toast.error("Failed to update status")
+      }
+    } catch (e) {
+      toast.error("An error occurred")
+    } finally {
+      setIsArchiving(false)
+    }
+  }
+
+  const handleDelete = async () => {
+    if (!confirm("Are you sure you want to permanently delete this meeting?")) return
+    try {
+      const res = await fetch(`/api/meetings/${id}`, {
+        method: "DELETE"
+      })
+      if (res.ok) {
+        window.dispatchEvent(new CustomEvent("meetings-updated"))
+        toast.success("Meeting deleted")
+        router.push("/meetings")
+      } else {
+        toast.error("Failed to delete meeting")
+      }
+    } catch (e) {
+      toast.error("An error occurred")
+    }
+  }
+
   useEffect(() => {
     if (id) {
       fetch(`/api/meetings/${id}`)
@@ -89,7 +141,28 @@ export default function MeetingDetailPage() {
           </p>
         </div>
 
-        <ExportDropdown result={meeting} />
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleToggleArchive}
+            disabled={isArchiving}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--card)] text-xs font-semibold text-[var(--text2)] hover:text-[var(--text)] hover:bg-[var(--bg3)] transition-colors disabled:opacity-50"
+            title={meeting.insights?.is_archived ? "Restore Meeting" : "Archive Meeting"}
+          >
+            <Archive className={`w-3.5 h-3.5 ${meeting.insights?.is_archived ? "fill-[var(--accent)] text-[var(--accent)]" : ""}`} />
+            <span>{meeting.insights?.is_archived ? "Restore" : "Archive"}</span>
+          </button>
+          
+          <button
+            onClick={handleDelete}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--card)] text-xs font-semibold text-[var(--red)] hover:bg-[var(--red)]/10 transition-colors"
+            title="Delete Meeting"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+            <span>Delete</span>
+          </button>
+
+          <ExportDropdown result={meeting} />
+        </div>
       </div>
 
       {/* Stats */}
