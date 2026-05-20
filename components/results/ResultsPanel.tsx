@@ -33,6 +33,22 @@ export function ResultsPanel() {
       animate={{ opacity: 1 }}
       className="flex-1 p-6 lg:p-7 overflow-y-visible lg:overflow-y-auto"
     >
+      {/* AI Auto-Detected Archetype Banner */}
+      {result.insights?.meetingType && (
+        <div className="mb-5 flex items-center justify-between p-4 rounded-xl border border-[var(--accent)]/20 bg-gradient-to-r from-[var(--accent)]/10 to-[var(--accent2)]/5 backdrop-blur-md relative overflow-hidden shadow-lg shadow-[var(--accent)]/5 animate-fade-in">
+          <div className="flex items-center gap-2">
+            <span className="flex h-2 w-2 relative">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--accent)] opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-[var(--accent)]"></span>
+            </span>
+            <span className="text-[10px] font-bold text-[var(--accent2)] uppercase tracking-wider">AI Auto-Detected Session Type</span>
+          </div>
+          <span className="px-3 py-1 text-xs font-bold text-white bg-[var(--accent)] rounded-full shadow-md shadow-[var(--accent)]/25 border border-white/10 flex items-center gap-1.5 animate-pulse-slow">
+            ✨ {result.insights.meetingType}
+          </span>
+        </div>
+      )}
+
       {/* Audio Player */}
       {audioUrl && (
         <div className="mb-5">

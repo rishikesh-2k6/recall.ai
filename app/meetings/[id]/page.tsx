@@ -69,13 +69,20 @@ export default function MeetingDetailPage() {
           >
             <ArrowLeft className="w-3 h-3" /> Back to meetings
           </Link>
-          <h1
-            className="text-2xl font-bold text-[var(--text)]"
-            style={{ fontFamily: 'var(--font-serif)' }}
-          >
-            {meeting.name}
-          </h1>
-          <p className="text-xs text-[var(--text3)] mt-1">
+          <div className="flex flex-wrap items-center gap-3">
+            <h1
+              className="text-2xl font-bold text-[var(--text)]"
+              style={{ fontFamily: 'var(--font-serif)' }}
+            >
+              {meeting.name}
+            </h1>
+            {meeting.insights?.meetingType && (
+              <span className="inline-flex items-center gap-1 px-3 py-0.5 rounded-full text-[10px] font-bold text-white bg-gradient-to-r from-[var(--accent)] to-[var(--accent2)] border border-white/10 shadow-md shadow-[var(--accent)]/20 animate-pulse-slow">
+                ✨ {meeting.insights.meetingType}
+              </span>
+            )}
+          </div>
+          <p className="text-xs text-[var(--text3)] mt-1.5">
             {date.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
             {' • '}
             {date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}

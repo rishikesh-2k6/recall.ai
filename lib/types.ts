@@ -40,6 +40,7 @@ export interface MeetingStats {
 
 export interface Insights {
   sentiment: 'aligned' | 'tense' | 'uncertain' | 'neutral'
+  meetingType?: string
   risks: string[]
   decisions: string[]
   talkRatio: Record<string, number> // speakerId → percentage

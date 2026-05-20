@@ -85,6 +85,16 @@ export async function POST(req: NextRequest) {
     CRITICAL INSTRUCTIONS:
     1. Summarize and format the "tldr" summary strictly in a ${styleSetting} style (e.g. if brief, write 1-2 sentence summary; if detailed, write a comprehensive multi-paragraph description; if bullet, write clean bullet-points).
     2. ${actions ? "Extract action items and priority checklists from the transcript." : "Do NOT extract any action items. The \"actionItems\" array in the output MUST be completely empty ([ ])."}
+    3. Auto-detect the type of meeting/session from the transcript's context, vocabulary, and interaction style.
+       Choose the most appropriate value for "meetingType" from these categories:
+       - "Daily Standup"
+       - "Technical Sync"
+       - "Academic Lecture"
+       - "Client Sales Call"
+       - "Candidate Interview"
+       - "Brainstorming Session"
+       - "General Discussion"
+       If none of the above fit perfectly, you may generate a concise custom category (max 3 words, e.g., "Board Meeting", "Product Review", "Design Sync").
     
     You must output a strict JSON response with the following structure:
     {
@@ -95,6 +105,7 @@ export async function POST(req: NextRequest) {
       ],
       "insights": {
         "sentiment": "aligned|tense|uncertain|neutral",
+        "meetingType": "The auto-detected meeting type from categories above.",
         "risks": ["Risk 1", "Risk 2"],
         "decisions": ["Decision 1", "Decision 2"]
       }
@@ -129,9 +140,10 @@ export async function POST(req: NextRequest) {
       })).default([]),
       insights: z.object({
         sentiment: z.enum(["aligned", "tense", "uncertain", "neutral"]).default("neutral"),
+        meetingType: z.string().default("General Discussion"),
         risks: z.array(z.string()).default([]),
         decisions: z.array(z.string()).default([])
-      }).default({ sentiment: "neutral", risks: [], decisions: [] })
+      }).default({ sentiment: "neutral", meetingType: "General Discussion", risks: [], decisions: [] })
     });
 
     let llmResult;
@@ -206,6 +218,7 @@ export async function POST(req: NextRequest) {
       })),
       insights: {
         sentiment: llmResult.insights?.sentiment || "neutral",
+        meetingType: llmResult.insights?.meetingType || "General Discussion",
         risks: llmResult.insights?.risks || [],
         decisions: llmResult.insights?.decisions || [],
         talkRatio: { s1: 100 },

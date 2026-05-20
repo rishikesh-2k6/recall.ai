@@ -213,11 +213,16 @@ export default function MeetingsPage() {
                 <div className="flex items-start justify-between gap-4">
                   {/* Left: name + meta */}
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
+                    <div className="flex flex-wrap items-center gap-2 mb-1.5">
                       <h3 className="text-sm font-semibold text-[var(--text)] truncate group-hover:text-[var(--accent)] transition-colors">
                         {meeting.name}
                       </h3>
                       <sentiment.icon className="w-4 h-4 flex-shrink-0" style={{ color: sentiment.color }} />
+                      {meeting.insights?.meetingType && (
+                        <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[9px] font-bold text-white bg-gradient-to-r from-[var(--accent)] to-[var(--accent2)] border border-white/10 shadow-sm shadow-[var(--accent)]/10 animate-pulse-slow">
+                          ✨ {meeting.insights.meetingType}
+                        </span>
+                      )}
                     </div>
 
                     <p className="text-xs text-[var(--text3)] line-clamp-2 mb-3">

@@ -13,9 +13,7 @@ import { RecordButton } from "./RecordButton"
 import { TimerDisplay } from "./TimerDisplay"
 import { ModeSelector } from "./ModeSelector"
 import { RecorderSettings } from "./RecorderSettings"
-import { MeetingTemplatePicker } from "./MeetingTemplatePicker"
 import type { RecorderSettings as SettingsType, RecorderMode } from "@/lib/types"
-import type { MeetingTemplate } from "./MeetingTemplatePicker"
 
 export function AudioRecorder() {
   const { phase, setPhase, setResult, setProcessingSteps, setAudioUrl } = useMeetingContext()
@@ -108,28 +106,25 @@ export function AudioRecorder() {
     setMeetingName("New Meeting")
   }
 
-  function handleTemplateSelect(template: MeetingTemplate) {
-    setSettings(prev => ({ ...prev, ...template.settings }))
-    if (meetingName === "New Meeting") setMeetingName(template.nameSuggestion)
-    toast(`Template applied: ${template.label}`)
-  }
-
   const showProcessButton = phase === "stopped" && (audioBlob || uploadedFile)
 
   return (
-    <section className="w-full lg:w-[340px] flex-shrink-0 flex flex-col gap-5 p-6 pt-16 lg:pt-6 border-b lg:border-b-0 lg:border-r border-[var(--border)] bg-[var(--bg2)]/30 overflow-y-visible lg:overflow-y-auto">
-      {/* Meeting name input */}
-      <div>
+    <section className="w-full lg:w-[360px] flex-shrink-0 flex flex-col gap-6 p-6 pt-16 lg:pt-6 border-b lg:border-b-0 lg:border-r border-[var(--border)] bg-[var(--bg2)]/40 backdrop-blur-md overflow-y-visible lg:overflow-y-auto shadow-xl shadow-black/10">
+      {/* Meeting name card */}
+      <div className="p-4 rounded-xl border border-[var(--border)] bg-[var(--card)]/50 backdrop-blur-sm shadow-sm relative group overflow-hidden focus-within:border-[var(--accent)]/50 focus-within:shadow-[var(--accent)]/5 transition-all">
+        <div className="absolute top-0 left-0 w-1 h-full bg-[var(--accent)]" />
+        <label className="text-[10px] font-semibold uppercase tracking-widest text-[var(--text3)] block mb-1">
+          Meeting Title
+        </label>
         <input
           type="text"
           value={meetingName}
           onChange={(e) => setMeetingName(e.target.value)}
-          className="w-full bg-transparent text-lg font-semibold text-[var(--text)] placeholder:text-[var(--text3)] border-none outline-none"
-          style={{ fontFamily: 'var(--font-serif)' }}
-          placeholder="Meeting Name"
+          className="w-full bg-transparent text-base font-semibold text-[var(--text)] placeholder:text-[var(--text3)] border-none outline-none focus:ring-0 p-0"
+          placeholder="New Meeting"
         />
-        <p className="text-[10px] text-[var(--text3)] mt-1">
-          {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+        <p className="text-[9px] text-[var(--text3)] mt-2 font-mono" style={{ fontFamily: 'var(--font-mono)' }}>
+          Captured on {new Date().toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}
         </p>
       </div>
 
@@ -158,11 +153,6 @@ export function AudioRecorder() {
           </motion.div>
         )}
       </AnimatePresence>
-
-      {/* Templates (idle only) */}
-      {phase === "idle" && (
-        <MeetingTemplatePicker onSelect={handleTemplateSelect} />
-      )}
 
       {/* Mode Selector (idle only) */}
       {phase === "idle" && (
