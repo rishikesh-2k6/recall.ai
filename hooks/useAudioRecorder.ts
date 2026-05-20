@@ -11,11 +11,37 @@ export function useAudioRecorder() {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const chunksRef = useRef<Blob[]>([])
 
-  const start = useCallback(async () => {
+  const start = useCallback(async (mode: 'mic' | 'system' | 'upload' = 'mic') => {
     try {
       setError(null)
       setAudioBlob(null)
-      const mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true })
+
+      let mediaStream: MediaStream
+      if (mode === 'system') {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
+          throw new Error("System audio capture is not supported by this browser.")
+        }
+        
+        // Request screen share with audio
+        const displayStream = await navigator.mediaDevices.getDisplayMedia({
+          video: true,
+          audio: true
+        })
+
+        const audioTracks = displayStream.getAudioTracks()
+        if (audioTracks.length === 0) {
+          // Stop video tracks immediately if no audio shared
+          displayStream.getTracks().forEach(t => t.stop())
+          throw new Error("No system audio track shared. Please check the 'Share audio' box in the sharing prompt.")
+        }
+
+        // Clean up video track immediately as we only need audio
+        displayStream.getVideoTracks().forEach(t => t.stop())
+        mediaStream = new MediaStream(audioTracks)
+      } else {
+        mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      }
+
       setStream(mediaStream)
 
       const mediaRecorder = new MediaRecorder(mediaStream, {
@@ -42,7 +68,7 @@ export function useAudioRecorder() {
       mediaRecorder.start()
       setIsRecording(true)
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Microphone access denied"
+      const msg = err instanceof Error ? err.message : "Access denied or not supported"
       setError(msg)
       console.error("Audio recorder error:", err)
     }

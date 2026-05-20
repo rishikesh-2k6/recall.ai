@@ -339,3 +339,11 @@ I executed the complete Free Optimizations plan across both the frontend and bac
 3. Configured `export const maxDuration = 60;` in `/api/process-audio` to extend the Next.js/Vercel execution timeout, preventing standard 504 gateway errors.
 4. Appended the latest session logs to `log.txt` to keep the chronological chat history perfectly in sync. I committed and pushed all updates to GitHub.
 
+Dhanush & Rishikesh:
+[Opened the application and asked to create a user guide, then verified that all features listed in the interface, including "System Audio" input capture, are fully operational.]
+
+Antigravity:
+1. Launched the Next.js development server synchronously at `http://localhost:3000` using direct path execution to bypass spaces and ampersand signs in the project's folder path.
+2. Created a premium, comprehensive User Guide in two formats: a permanent `USER_GUIDE.md` in the repository root for team distribution, and a highly polished interactive `user_guide.md` artifact in the conversation directory, detailing all panels, pricing tiers, templates, RAG-powered Vault AI Search queries, and export flows.
+3. Fully implemented the "System Audio" screen audio capture feature. Upgraded the `useAudioRecorder.ts` hook to conditionally invoke `navigator.mediaDevices.getDisplayMedia` with screen-sharing audio requests, automatically stop video tracks to save memory, and output a clean system audio stream. Updated `AudioRecorder.tsx` to direct the input mode parameters and display context-aware toasts for microphone vs system audio capture.
+4. Synchronized all updates and pushed them to the remote GitHub repository.

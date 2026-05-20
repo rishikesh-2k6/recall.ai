@@ -34,10 +34,13 @@ export function AudioRecorder() {
   const [uploadedFile, setUploadedFile] = useState<File | null>(null)
 
   async function handleStart() {
-    await startMic()
+    await startMic(mode)
     startTimer()
     setPhase("recording")
-    toast("Recording started", { description: "Speak clearly into your microphone." })
+    const toastMsg = mode === "system"
+      ? "Recording system audio. Make sure you share system audio in the screen prompt."
+      : "Speak clearly into your microphone."
+    toast("Recording started", { description: toastMsg })
   }
 
   async function handleStop() {
