@@ -25,7 +25,7 @@ By integrating high-performance local compression with advanced serverless LLM p
 
 ### 🎤 Capture & Compression
 * **Live Microphone Recording:** One-tap room audio capture with a real-time Web Audio API frequency waveform visualizer canvas.
-* **Pre-recorded File Uploads:** Drop-in processing for `.mp3`, `.wav`, `.m4a`, and `.webm` up to a secure **25 MB** boundary.
+* **Pre-recorded File Uploads:** Drop-in processing for `.mp3`, `.wav`, `.m4a`, `.webm`, and `.mp4` video/audio up to a secure **25 MB** boundary.
 * **Active System Audio Recording:** Built-in loopback capture (screen audio) utilizing browser `getDisplayMedia` to record online conference calls (Google Meet, Zoom, MS Teams).
 * **32kbps Mono Vocal Compression:** Integrates a client-side codec in `MediaRecorder` that slashes audio payloads by **up to 80%** while preserving vocal readability for AI speech-to-text.
 

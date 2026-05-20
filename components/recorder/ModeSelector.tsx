@@ -65,7 +65,7 @@ export function ModeSelector({ mode, onChange, onFileSelect }: ModeSelectorProps
         >
           <Upload className="w-6 h-6 mx-auto mb-2 text-[var(--text3)]" />
           <p className="text-sm text-[var(--text2)]">Click or drag file here</p>
-          <p className="text-xs text-[var(--text3)] mt-1">.mp3, .wav, .m4a, .webm</p>
+          <p className="text-xs text-[var(--text3)] mt-1">.mp3, .wav, .m4a, .webm, .mp4</p>
         </div>
       )}
 
@@ -81,7 +81,7 @@ export function ModeSelector({ mode, onChange, onFileSelect }: ModeSelectorProps
       <input
         ref={fileInputRef}
         type="file"
-        accept="audio/*"
+        accept="audio/*,video/mp4,video/x-m4v,video/*"
         onChange={handleFileChange}
         className="hidden"
       />

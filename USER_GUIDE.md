@@ -91,7 +91,7 @@ If you want to apply instant settings optimized for specific meeting types, choo
 ### Step 3: Choose Your Capture Mode
 * **Microphone Mode (Live Capture):** Utilizes your device's default microphone. Shows a live, animated visualizer canvas matching your vocal frequencies.
 * **Upload Mode (Pre-recorded Files):** Allows you to upload pre-recorded meetings or classes.
-  * *Supported file formats:* `.mp3`, `.wav`, `.m4a`, `.webm`.
+  * *Supported file formats:* `.mp3`, `.wav`, `.m4a`, `.webm`, `.mp4`.
   * *File size limit:* Strictly validated up to **25 MB** to ensure fast serverless execution.
 
 ### Step 4: Refine Processing Parameters

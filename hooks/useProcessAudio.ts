@@ -51,7 +51,8 @@ export function useProcessAudio() {
     try {
       // Try real API first
       const formData = new FormData()
-      formData.append('audio', audioBlob, 'recording.webm')
+      const filename = (audioBlob as any).name || 'recording.webm'
+      formData.append('audio', audioBlob, filename)
       formData.append('name', meetingName)
       formData.append('diarize', String(settings.diarize))
       formData.append('actions', String(settings.actions))

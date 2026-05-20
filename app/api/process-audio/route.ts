@@ -45,10 +45,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: `File too large. Maximum size is ${MAX_FILE_SIZE / (1024 * 1024)}MB.` }, { status: 413 });
     }
 
-    const isAudioType = file.type.startsWith("audio/") || file.type === "application/octet-stream";
-    const hasAudioExt = /\.(mp3|mp4|mpeg|mpga|m4a|wav|webm|ogg|aac)$/i.test(file.name);
-    if (!isAudioType && !hasAudioExt) {
-      return NextResponse.json({ error: "Invalid file type. Only audio files are allowed." }, { status: 400 });
+    const isMediaType = file.type.startsWith("audio/") || file.type.startsWith("video/") || file.type === "application/octet-stream";
+    const hasMediaExt = /\.(mp3|mp4|mpeg|mpga|m4a|wav|webm|ogg|aac)$/i.test(file.name);
+    if (!isMediaType && !hasMediaExt) {
+      return NextResponse.json({ error: "Invalid file type. Only audio and video files (up to 25MB) are allowed." }, { status: 400 });
     }
 
 

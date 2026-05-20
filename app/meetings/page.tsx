@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react"
 import Link from "next/link"
 import { motion, AnimatePresence } from "framer-motion"
-import { Clock, Users, FileText, ChevronRight, Search, Smile, Frown, HelpCircle, Sparkles, Send } from "lucide-react"
+import { Clock, Users, FileText, ChevronRight, Search, Smile, Frown, HelpCircle, Sparkles, Send, Trash2 } from "lucide-react"
 import { formatMinSec } from "@/lib/utils"
 
 const SENTIMENT_ICONS: Record<string, { icon: React.ElementType; color: string }> = {
@@ -21,7 +21,7 @@ export default function MeetingsPage() {
   const [allMeetings, setAllMeetings] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
-  useEffect(() => {
+  const fetchMeetings = () => {
     fetch("/api/meetings")
       .then(r => r.json())
       .then(data => {
@@ -29,7 +29,37 @@ export default function MeetingsPage() {
         setIsLoading(false)
       })
       .catch(() => setIsLoading(false))
+  }
+
+  useEffect(() => {
+    fetchMeetings()
+    
+    window.addEventListener("meetings-updated", fetchMeetings)
+    return () => {
+      window.removeEventListener("meetings-updated", fetchMeetings)
+    }
   }, [])
+
+  async function handleDelete(meetingId: string, e: React.MouseEvent) {
+    e.preventDefault()
+    e.stopPropagation()
+    if (!confirm("Are you sure you want to delete this meeting?")) return
+
+    try {
+      const res = await fetch(`/api/meetings/${meetingId}`, {
+        method: "DELETE",
+      })
+      if (res.ok) {
+        setAllMeetings(prev => prev.filter(m => m.id !== meetingId))
+        window.dispatchEvent(new CustomEvent("meetings-updated"))
+      } else {
+        alert("Failed to delete meeting.")
+      }
+    } catch (err) {
+      console.error(err)
+      alert("An error occurred while deleting the meeting.")
+    }
+  }
 
   async function handleVaultAsk() {
     if (!search.trim()) return
@@ -174,10 +204,11 @@ export default function MeetingsPage() {
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.06 }}
+              className="relative group"
             >
               <Link
                 href={`/meetings/${meeting.id}`}
-                className="block p-5 rounded-xl bg-[var(--card)] border border-[var(--border)] hover:border-[var(--accent)]/20 hover:bg-[var(--card2)] transition-all group"
+                className="block p-5 rounded-xl bg-[var(--card)] border border-[var(--border)] hover:border-[var(--accent)]/20 hover:bg-[var(--card2)] transition-all pr-14 group"
               >
                 <div className="flex items-start justify-between gap-4">
                   {/* Left: name + meta */}
@@ -243,6 +274,13 @@ export default function MeetingsPage() {
                   </div>
                 )}
               </Link>
+              <button
+                onClick={(e) => handleDelete(meeting.id, e)}
+                className="absolute right-12 top-5 p-1.5 rounded-lg border border-[var(--border)] bg-[var(--card)] text-[var(--text3)] hover:text-[var(--red)] hover:bg-[var(--red)]/10 opacity-0 group-hover:opacity-100 transition-all z-10"
+                title="Delete meeting"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
             </motion.div>
           )
         })}

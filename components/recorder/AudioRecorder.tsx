@@ -68,6 +68,7 @@ export function AudioRecorder() {
       setResult(result)
       setPhase("complete")
       toast.success("Meeting processed!", { description: `${result.stats.wordCount.toLocaleString()} words transcribed` })
+      window.dispatchEvent(new CustomEvent("meetings-updated"))
       // Auto-set suggested title
       if (result.suggestedTitle && meetingName === "New Meeting") {
         setMeetingName(result.suggestedTitle)

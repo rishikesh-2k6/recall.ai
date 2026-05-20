@@ -1,15 +1,15 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import {
   Mic, Clock, Settings, Menu, X,
   Smile, Frown, HelpCircle,
   PanelLeftClose, PanelLeftOpen,
+  Search, Pin, Trash2
 } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
-import { MOCK_MEETINGS } from "@/lib/mock-data"
 import { SettingsModal } from "./SettingsModal"
 import { useTheme } from "@/contexts/theme-context"
 
@@ -27,12 +27,93 @@ const SENTIMENT_ICONS: Record<string, { icon: React.ElementType; color: string }
 
 export function Sidebar() {
   const pathname  = usePathname()
+  const router    = useRouter()
   const [mobileOpen,   setMobileOpen]   = useState(false)
   const [collapsed,    setCollapsed]    = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const { theme, setTheme } = useTheme()
 
-  const recentMeetings = MOCK_MEETINGS.slice(0, 5)
+  const [meetings, setMeetings] = useState<any[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [pinnedIds, setPinnedIds] = useState<string[]>([])
+  const [searchQuery, setSearchQuery] = useState("")
+
+  const fetchMeetings = async () => {
+    try {
+      const res = await fetch("/api/meetings")
+      const data = await res.json()
+      if (Array.isArray(data)) {
+        setMeetings(data)
+      }
+    } catch (e) {
+      console.error("Error fetching meetings in sidebar:", e)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    const savedPinned = localStorage.getItem("pinned_meetings")
+    if (savedPinned) {
+      try {
+        setPinnedIds(JSON.parse(savedPinned))
+      } catch (e) {
+        console.error(e)
+      }
+    }
+
+    fetchMeetings()
+
+    window.addEventListener("meetings-updated", fetchMeetings)
+    return () => {
+      window.removeEventListener("meetings-updated", fetchMeetings)
+    }
+  }, [])
+
+  const togglePin = (meetingId: string, e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    let nextPinned: string[]
+    if (pinnedIds.includes(meetingId)) {
+      nextPinned = pinnedIds.filter(id => id !== meetingId)
+    } else {
+      nextPinned = [...pinnedIds, meetingId]
+    }
+    setPinnedIds(nextPinned)
+    localStorage.setItem("pinned_meetings", JSON.stringify(nextPinned))
+  }
+
+  const deleteMeeting = async (meetingId: string, e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (!confirm("Are you sure you want to delete this meeting?")) return
+
+    try {
+      const res = await fetch(`/api/meetings/${meetingId}`, {
+        method: "DELETE",
+      })
+      if (res.ok) {
+        setMeetings(prev => prev.filter(m => m.id !== meetingId))
+        window.dispatchEvent(new CustomEvent("meetings-updated"))
+        
+        if (pathname === `/meetings/${meetingId}`) {
+          router.push("/meetings")
+        }
+      } else {
+        alert("Failed to delete meeting.")
+      }
+    } catch (err) {
+      console.error(err)
+      alert("An error occurred while deleting the meeting.")
+    }
+  }
+
+  const filteredMeetings = meetings.filter(m =>
+    m.name.toLowerCase().includes(searchQuery.toLowerCase())
+  )
+
+  const pinnedMeetings = filteredMeetings.filter(m => pinnedIds.includes(m.id))
+  const recentMeetings = filteredMeetings.filter(m => !pinnedIds.includes(m.id))
 
   // ─── shared nav link ─────────────────────────────────────────────
   function NavLink({ item }: { item: typeof NAV_ITEMS[0] }) {
@@ -176,24 +257,119 @@ export function Sidebar() {
               <p className="px-3 mb-1.5 text-[10px] font-semibold uppercase tracking-widest text-[var(--text3)]">
                 Recent
               </p>
-              {recentMeetings.map(meeting => {
-                const s = SENTIMENT_ICONS[meeting.insights.sentiment] || SENTIMENT_ICONS.neutral
-                const isActive = pathname === `/meetings/${meeting.id}`
-                return (
-                  <Link
-                    key={meeting.id}
-                    href={`/meetings/${meeting.id}`}
-                    className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs transition-colors ${
-                      isActive
-                        ? "bg-[var(--accent)]/12 text-[var(--accent)]"
-                        : "text-[var(--text2)] hover:text-[var(--text)] hover:bg-[var(--bg3)]"
-                    }`}
-                  >
-                    <s.icon className="w-3 h-3 flex-shrink-0" style={{ color: s.color }} />
-                    <span className="truncate">{meeting.name}</span>
-                  </Link>
-                )
-              })}
+
+              {/* Search bar */}
+              <div className="px-3 mb-3">
+                <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-[var(--bg3)]/50 border border-[var(--border)] focus-within:border-[var(--accent)]/30 transition-all">
+                  <Search className="w-3.5 h-3.5 text-[var(--text3)] flex-shrink-0" />
+                  <input
+                    type="text"
+                    placeholder="Search recent..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="bg-transparent text-xs text-[var(--text)] outline-none w-full placeholder:text-[var(--text3)]"
+                  />
+                  {searchQuery && (
+                    <button 
+                      onClick={() => setSearchQuery("")}
+                      className="text-[var(--text3)] hover:text-[var(--text2)]"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Pinned section */}
+              {pinnedMeetings.length > 0 && (
+                <div className="mb-4">
+                  <p className="px-3 mb-1 text-[9px] font-bold uppercase tracking-widest text-[var(--accent2)] flex items-center gap-1">
+                    <Pin className="w-2.5 h-2.5 fill-[var(--accent2)] text-[var(--accent2)] rotate-45" /> Pinned
+                  </p>
+                  {pinnedMeetings.map(meeting => {
+                    const s = SENTIMENT_ICONS[meeting.insights?.sentiment] || SENTIMENT_ICONS.neutral
+                    const isActive = pathname === `/meetings/${meeting.id}`
+                    return (
+                      <div key={meeting.id} className="group relative flex items-center">
+                        <Link
+                          href={`/meetings/${meeting.id}`}
+                          className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs transition-colors w-full pr-14 ${
+                            isActive
+                              ? "bg-[var(--accent)]/12 text-[var(--accent)] font-medium"
+                              : "text-[var(--text2)] hover:text-[var(--text)] hover:bg-[var(--bg3)]"
+                          }`}
+                        >
+                          <s.icon className="w-3 h-3 flex-shrink-0" style={{ color: s.color }} />
+                          <span className="truncate flex-1">{meeting.name}</span>
+                        </Link>
+                        <div className="absolute right-2 top-1/2 -translate-y-1/2 hidden group-hover:flex items-center gap-1 z-10">
+                          <button
+                            onClick={(e) => togglePin(meeting.id, e)}
+                            title="Unpin meeting"
+                            className="p-1 rounded hover:bg-[var(--bg3)] text-[var(--text3)] hover:text-[var(--accent2)] transition-colors"
+                          >
+                            <Pin className="w-3 h-3 fill-[var(--accent2)] text-[var(--accent2)]" />
+                          </button>
+                          <button
+                            onClick={(e) => deleteMeeting(meeting.id, e)}
+                            title="Delete meeting"
+                            className="p-1 rounded hover:bg-[var(--bg3)] text-[var(--text3)] hover:text-[var(--red)] transition-colors"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </button>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+
+              {/* Recent section */}
+              <div>
+                {pinnedMeetings.length > 0 && (
+                  <p className="px-3 mb-1 text-[9px] font-bold uppercase tracking-widest text-[var(--text3)]">
+                    All Recent
+                  </p>
+                )}
+                {recentMeetings.length === 0 && pinnedMeetings.length === 0 && !isLoading && (
+                  <p className="px-3 py-2 text-xs text-[var(--text3)] italic">No meetings found</p>
+                )}
+                {recentMeetings.map(meeting => {
+                  const s = SENTIMENT_ICONS[meeting.insights?.sentiment] || SENTIMENT_ICONS.neutral
+                  const isActive = pathname === `/meetings/${meeting.id}`
+                  return (
+                    <div key={meeting.id} className="group relative flex items-center">
+                      <Link
+                        href={`/meetings/${meeting.id}`}
+                        className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs transition-colors w-full pr-14 ${
+                          isActive
+                            ? "bg-[var(--accent)]/12 text-[var(--accent)] font-medium"
+                            : "text-[var(--text2)] hover:text-[var(--text)] hover:bg-[var(--bg3)]"
+                        }`}
+                      >
+                        <s.icon className="w-3 h-3 flex-shrink-0" style={{ color: s.color }} />
+                        <span className="truncate flex-1">{meeting.name}</span>
+                      </Link>
+                      <div className="absolute right-2 top-1/2 -translate-y-1/2 hidden group-hover:flex items-center gap-1 z-10">
+                        <button
+                          onClick={(e) => togglePin(meeting.id, e)}
+                          title="Pin meeting"
+                          className="p-1 rounded hover:bg-[var(--bg3)] text-[var(--text3)] hover:text-[var(--accent2)] transition-colors"
+                        >
+                          <Pin className="w-3 h-3" />
+                        </button>
+                        <button
+                          onClick={(e) => deleteMeeting(meeting.id, e)}
+                          title="Delete meeting"
+                          className="p-1 rounded hover:bg-[var(--bg3)] text-[var(--text3)] hover:text-[var(--red)] transition-colors"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </button>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
             </div>
           )}
         </div>
