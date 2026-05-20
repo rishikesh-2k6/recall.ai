@@ -166,5 +166,12 @@
   ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 999px; }
   ::-webkit-scrollbar-thumb:hover { background: var(--text3); }
   * { scrollbar-width: thin; scrollbar-color: var(--border2) transparent; }
+
+  /* Dropdown option text visibility fix */
+  select option {
+    background-color: var(--card);
+    color: var(--text);
+  }
 }
+
 

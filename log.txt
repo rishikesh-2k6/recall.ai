@@ -347,3 +347,14 @@ Antigravity:
 2. Created a premium, comprehensive User Guide in two formats: a permanent `USER_GUIDE.md` in the repository root for team distribution, and a highly polished interactive `user_guide.md` artifact in the conversation directory, detailing all panels, pricing tiers, templates, RAG-powered Vault AI Search queries, and export flows.
 3. Fully implemented the "System Audio" screen audio capture feature. Upgraded the `useAudioRecorder.ts` hook to conditionally invoke `navigator.mediaDevices.getDisplayMedia` with screen-sharing audio requests, automatically stop video tracks to save memory, and output a clean system audio stream. Updated `AudioRecorder.tsx` to direct the input mode parameters and display context-aware toasts for microphone vs system audio capture.
 4. Synchronized all updates and pushed them to the remote GitHub repository.
+
+--- UI BUG FIX SESSION ---
+
+Rishikesh:
+[Reported that the language/style dropdown (select options) text is invisible or unreadable due to a theme contrast issue, and asked to fix the UI bugs.]
+
+Antigravity:
+I analyzed the dropdown styles and fixed the visibility issue across all browsers (specifically Chromium engines) under both dark and light modes:
+1. Added a global CSS rule in `app/globals.css` targeting `select option` to explicitly use `var(--card)` for the background and `var(--text)` for the text color, respecting the active theme.
+2. Added explicit Tailwind fallback styles directly to the `<option>` elements inside `components/recorder/RecorderSettings.tsx` and `components/layout/SettingsModal.tsx`.
+3. Verified that the Next.js dev server compiles successfully. Appended the latest session logs to `log.txt`.

@@ -56,11 +56,11 @@ export function RecorderSettings({ settings, onChange }: RecorderSettingsProps) 
             onChange={(e) => update('language', e.target.value)}
             className="w-full bg-transparent text-xs text-[var(--text)] focus:outline-none cursor-pointer"
           >
-            <option value="en">English</option>
-            <option value="hi">Hindi</option>
-            <option value="es">Spanish</option>
-            <option value="fr">French</option>
-            <option value="auto">Auto-detect</option>
+            <option value="en" className="bg-[var(--card)] text-[var(--text)]">English</option>
+            <option value="hi" className="bg-[var(--card)] text-[var(--text)]">Hindi</option>
+            <option value="es" className="bg-[var(--card)] text-[var(--text)]">Spanish</option>
+            <option value="fr" className="bg-[var(--card)] text-[var(--text)]">French</option>
+            <option value="auto" className="bg-[var(--card)] text-[var(--text)]">Auto-detect</option>
           </select>
         </div>
 
@@ -72,9 +72,9 @@ export function RecorderSettings({ settings, onChange }: RecorderSettingsProps) 
             onChange={(e) => update('style', e.target.value)}
             className="w-full bg-transparent text-xs text-[var(--text)] focus:outline-none cursor-pointer"
           >
-            <option value="detailed">Detailed</option>
-            <option value="brief">Brief</option>
-            <option value="bullet">Bullet</option>
+            <option value="detailed" className="bg-[var(--card)] text-[var(--text)]">Detailed</option>
+            <option value="brief" className="bg-[var(--card)] text-[var(--text)]">Brief</option>
+            <option value="bullet" className="bg-[var(--card)] text-[var(--text)]">Bullet</option>
           </select>
         </div>
       </div>

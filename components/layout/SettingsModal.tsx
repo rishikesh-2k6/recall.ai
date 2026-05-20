@@ -141,11 +141,11 @@ export function SettingsModal({ open, onClose, theme, onThemeChange }: SettingsM
                           onChange={e => setLanguage(e.target.value)}
                           className="w-full px-3 py-2.5 rounded-lg bg-[var(--bg)] border border-[var(--border)] text-sm text-[var(--text)] outline-none focus:border-[var(--accent)]/50 transition-colors"
                         >
-                          <option value="en">English</option>
-                          <option value="hi">Hindi</option>
-                          <option value="es">Spanish</option>
-                          <option value="fr">French</option>
-                          <option value="de">German</option>
+                          <option value="en" className="bg-[var(--card)] text-[var(--text)]">English</option>
+                          <option value="hi" className="bg-[var(--card)] text-[var(--text)]">Hindi</option>
+                          <option value="es" className="bg-[var(--card)] text-[var(--text)]">Spanish</option>
+                          <option value="fr" className="bg-[var(--card)] text-[var(--text)]">French</option>
+                          <option value="de" className="bg-[var(--card)] text-[var(--text)]">German</option>
                         </select>
                       </Section>
                     </div>
