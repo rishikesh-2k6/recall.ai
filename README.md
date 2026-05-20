@@ -1,205 +1,193 @@
-# Verbatim — AI Meeting & Lecture Note Taker
+# Verbatim — Enterprise AI Meeting & Lecture Note Taker
 
-> Record any meeting or lecture. Get instant AI-powered transcripts, summaries, action items, and speaker insights — all in seconds.
+<div align="center">
 
-Verbatim is a dark-themed, split-panel web application that captures live audio (or accepts file uploads), transcribes it via **Groq Whisper**, summarises it via **NVIDIA Llama 3**, and presents structured notes with speaker diarization, action items, and AI-driven insights.
+[![Next.js](https://img.shields.io/badge/Next.js-16-000000?style=for-the-badge&logo=nextdotjs&logoColor=white)](https://nextjs.org/)
+[![Supabase](https://img.shields.io/badge/Supabase-v2-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)](https://supabase.com/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind-v4-38B2AC?style=for-the-badge&logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
+[![Groq Whisper](https://img.shields.io/badge/Groq-Whisper_v3-7C6EF0?style=for-the-badge)](https://groq.com/)
+[![NVIDIA Llama](https://img.shields.io/badge/NVIDIA-LLaMA_3-76B900?style=for-the-badge&logo=nvidia&logoColor=white)](https://nvidia.com/)
 
-Built for the [8x Engineer](https://8x.engineer) Frontend Challenge — a clone of the [Summary: AI Meeting Note Taker](https://apps.apple.com/us/app/summary-ai-note-taker/id6670175056) app.
+**Focus on the meeting, we’ll take the notes.** A high-fidelity, split-panel web companion that captures room and system audio, processes smart speaker diarization, generates chronologues, extracts actionable tasks, and supports RAG-powered vector search across your history.
+
+---
+</div>
+
+## 🌌 Overview
+
+Verbatim is a premium Next.js and Supabase web application styled with vibrant HSL dark modes, responsive framer-motion micro-animations, and glassmorphic card overlays. It is designed to clone and enhance the iOS *Summary: AI Meeting Note Taker* app experience on the web. 
+
+By integrating high-performance local compression with advanced serverless LLM pipelines, it processes minutes of dialogue in seconds, yielding structured summaries, checkable action items, speaker analytics, and seamless Notion sync.
 
 ---
 
 ## ✨ Features
 
-### Core
-- **One-Tap Live Recording** — Capture room audio via browser microphone with a single button
-- **Audio File Upload** — Import `.mp3`, `.wav`, `.m4a`, `.webm` files for processing
-- **Real-Time Waveform** — Canvas-based visualizer with idle sine wave and active frequency bars (powered by Web Audio API `AnalyserNode`)
-- **Live Timer** — HH:MM:SS stopwatch during recording
+### 🎤 Capture & Compression
+* **Live Microphone Recording:** One-tap room audio capture with a real-time Web Audio API frequency waveform visualizer canvas.
+* **Pre-recorded File Uploads:** Drop-in processing for `.mp3`, `.wav`, `.m4a`, and `.webm` up to a secure **25 MB** boundary.
+* **Active System Audio Recording:** Built-in loopback capture (screen audio) utilizing browser `getDisplayMedia` to record online conference calls (Google Meet, Zoom, MS Teams).
+* **32kbps Mono Vocal Compression:** Integrates a client-side codec in `MediaRecorder` that slashes audio payloads by **up to 80%** while preserving vocal readability for AI speech-to-text.
 
-### AI Processing
-- **Full Transcript** — Speaker-labeled, timestamped, word-for-word text via Groq Whisper-v3
-- **TLDR & Summary** — Concise overview with optional key quote highlight
-- **Action Items** — Prioritized checklist (high/medium/low) with assignee support and inline add
-- **AI Insights** — Sentiment analysis, timeline risks, key decisions, and animated talk-ratio bars
-- **Speaker Diarization** — Color-coded speaker chips with talk-time breakdown
+### 🧠 AI Analytics Workspace
+* **Chronological TLDR:** A concise paragraph summarizing core takeaways alongside a highlighted **Featured Key Quote**.
+* **Speaker Diarization:** Diarizes conversations into color-coded speaker logs showing who spoke and when.
+* **Checkable Action Items:** Interactive task checklist highlighting prioritization tags (`High`, `Medium`, `Low`) and contextually inferred task assignees.
+* **Deep Insights Panel:** Comprehensive analytics capturing:
+  * **Overall Sentiment:** Color-coded emotional index (🟢 *Aligned*, 🟡 *Uncertain*, 🔴 *Tense*, ⚪ *Neutral*).
+  * **Roadmap Decisions Log:** Formal milestones, timelines, and commitments made.
+  * **Potential Risks:** Warning list of roadblocks, technical debt, and schedule threats.
+  * **Talk Ratio Metrics:** Interactive percentage-based participation charts.
 
-### App Features
-- **Meeting History** — Sidebar with recent meetings (backed by Supabase)
-- **Searchable Transcript** — Client-side keyword search with highlight matching
-- **Keyword Highlighting** — Auto-detects "deadline", "budget", "decision", "blocker", "action"
-- **Export** — Copy TLDR / action items to clipboard, download `.txt` transcript
-- **AI Settings Panel** — Toggle speaker diarization, action item extraction, select language (EN/HI/ES/FR/Auto), and summary style (Brief/Detailed/Bullet)
-- **Meeting Templates** — Presets for standups, interviews, sales calls, and brainstorms
+### 🔍 History & RAG Semantic Search
+* **Database Archiving:** Syncs all processed notes, audio logs, and metrics directly to a secure PostgreSQL Supabase DB.
+* **Vault AI Semantic Search:** A built-in **RAG (Retrieval-Augmented Generation)** search engine. By typing questions ending with `?` (e.g., *“What did we decide about the budget?”*), Verbatim queries vector databases, feeds transcript contexts into LLaMA 3, and returns a synthesized paragraph-long answer.
+* **Sentiment Filters:** Instantly filter your entire dashboard history using sentiment pill badges (*All / Aligned / Tense / Uncertain*).
 
-### Design
-- **Dark Theme** — Premium deep-purple color system (`#0a0a0f` → `#7c6ef0`)
-- **Typography** — DM Serif Display (headings) + Plus Jakarta Sans (body) + DM Mono (timestamps)
-- **Animations** — Framer Motion staggered reveals, tab transitions, pulse rings, and processing step tracker
-- **Mobile-Responsive** — Collapses to single-column on mobile viewports
-- **Accessible** — ARIA labels on interactive elements, keyboard-navigable, color never sole indicator
+### 🌐 Exports & Integrations
+* **Copy-to-Clipboard Actions:** Separate triggers to copy the summary (GFM markdown), transcript (timestamped logs), or prioritized actions.
+* **File Downloads:** Instant local exports in clean `.txt` or high-fidelity GitHub-Flavored Markdown `.md` sheets.
+* **Notion Workspace Integration:** Connect and sync completed notes directly into your Notion database with automatic loading and success notifications.
+
+---
+
+## 🔒 Security Hardening
+
+Verbatim has been rigorously audited and secured against modern web vulnerabilities:
+
+| Severity | Vulnerability | Resolution |
+| :---: | :--- | :--- |
+| **Critical** | Route Access Bypass | Implemented root Next.js `middleware.ts` to block unauthorized users from `/dashboard`, `/meetings`, `/profile`, and `/upgrade`. |
+| **Critical** | Billing Escalation | Disabled direct client-side DB writes for tier states. Created secure server-side `/api/account/upgrade` and `/api/account/downgrade` routes. |
+| **Critical** | File Upload DOS | Added strict **25 MB** upload limits and dynamic MIME-type extensions filters in `/api/process-audio/route.ts`. |
+| **High** | Open Redirect | Sanitized and validated `returnUrl` parameters inside route controllers. |
+| **High** | Prompt Injection | Isolated system instructions from user inputs by packing raw transcript blocks inside strict `<transcript>` tags. |
 
 ---
 
 ## 🛠 Tech Stack
 
-| Layer | Technology | Purpose |
-|---|---|---|
-| Framework | Next.js 16 (App Router) | File-based routing, Server Actions |
-| Language | TypeScript | Type safety across the stack |
-| Styling | Tailwind CSS + CSS Variables | Utility-first + dark theme tokens |
-| Components | Shadcn/ui + Radix Primitives | Headless, composable, themed |
-| Database | Supabase (PostgreSQL) | Auth + meeting storage |
-| Audio | Browser `MediaRecorder` API | Zero-dependency recording |
-| Waveform | HTML5 Canvas + Web Audio API | Real-time frequency visualization |
-| Animations | Framer Motion | Smooth transitions and reveals |
-| Transcription | Groq API (Whisper-v3) | Fast, accurate speech-to-text |
-| Summarization | NVIDIA API (Llama 3) | TLDR, action items, insights extraction |
-| Icons | Lucide React | Consistent stroke icons |
-| Toasts | Sonner | Notification system |
+* **Frontend Framework:** Next.js 16 (App Router) + React 19 + TypeScript
+* **Styling:** CSS-First Tailwind CSS + custom glassmorphic CSS variables
+* **Database & Auth:** Supabase SSR Auth + PostgreSQL (pgvector support ready)
+* **Audio Engineering:** HTML5 Web Audio API + `MediaRecorder` + Canvas `AnalyserNode`
+* **Animations:** Framer Motion (staggered transitions, hover triggers, pulse loops)
+* **Speech-to-Text (STT):** Groq API (Whisper-v3 Cloud Integration)
+* **LLM Engine:** NVIDIA API (LLaMA 3 NIM)
+* **Integrations:** Official Notion Workspace API Client
 
 ---
 
-## 📂 Project Structure
+## 📁 Architecture Directory Map
 
 ```
 /app
   /dashboard
-    page.tsx                  ← Main split-panel view
-    layout.tsx                ← Sidebar + topbar shell
+    page.tsx                  ← Split-panel recording & details view
+    layout.tsx                ← Sidebar + topbar layout wrapper
   /meetings
-    page.tsx                  ← Meeting history list (planned)
+    page.tsx                  ← History explorer & Vault AI Search (RAG)
+    /[id]                     ← Saved meeting detailed sheet & export actions
   /api
     /process-audio
-      route.ts                ← Backend AI pipeline (backend dev)
-  layout.tsx                  ← Root layout (fonts, providers)
-  globals.css                 ← CSS variables, base styles
+      route.ts                ← Secure 25MB validation & Groq/Nvidia pipeline
+    /account
+      /upgrade                ← Server-side subscription validator
+      /downgrade              ← Secure tier downgrade router
+  layout.tsx                  ← Fonts, global CSS tokens, providers
+  globals.css                 ← CSS design variables & base styles
 
 /components
-  /layout
-    Sidebar.tsx               ← Navigation + recent meetings
-    Topbar.tsx                ← Live badge + model badges
   /recorder
-    AudioRecorder.tsx         ← Root recorder (state machine)
-    WaveformCanvas.tsx        ← Canvas visualizer
-    RecordButton.tsx          ← Animated record/stop button
-    TimerDisplay.tsx          ← HH:MM:SS display
-    ModeSelector.tsx          ← Mic / Upload / System tabs
-    RecorderSettings.tsx      ← AI settings grid
+    AudioRecorder.tsx         ← Recorder coordinator
+    WaveformCanvas.tsx        ← Frequency waveform visualizer
+    RecordButton.tsx          ← Animated trigger button
+    TimerDisplay.tsx          ← HH:MM:SS stopwatch
+    ModeSelector.tsx          ← Mic / Upload / System selector
+    RecorderSettings.tsx      ← AI parameters toggles
   /results
-    ResultsPanel.tsx          ← Tabbed results container
-    TLDRCard.tsx              ← Summary + key quote
-    TranscriptView.tsx        ← Searchable, highlighted transcript
-    ActionItemList.tsx        ← Checkable action items
-    InsightsPanel.tsx         ← Sentiment + risks + talk ratio
-    SpeakerChips.tsx          ← Color-coded speaker badges
-    StatsRow.tsx              ← Duration / Speakers / Words / Actions
+    ResultsPanel.tsx          ← Analytical tabs panel
+    TLDRCard.tsx              ← Summaries & quote cards
+    TranscriptView.tsx        ← Timestamped searchable dialogue
+    ActionItemList.tsx        ← Interactive prioritized checklist
+    InsightsPanel.tsx         ← Sentiment & talk ratio graphs
+    SpeakerChips.tsx          ← Speaker identification badges
+    StatsRow.tsx              ← Meet length, words, and speaker metrics
   /shared
-    ProcessingState.tsx       ← Animated step tracker
-    EmptyState.tsx            ← Pre-recording placeholder
+    ProcessingState.tsx       ← Animated step timeline
 
 /hooks
-  useAudioRecorder.ts         ← MediaRecorder logic
-  useWaveform.ts              ← Canvas animation loop
-  useTimer.ts                 ← Stopwatch logic
-  useProcessAudio.ts          ← API call + step progress
-
-/contexts
-  meeting-context.tsx         ← Shared state (phase, result)
-
-/lib
-  types.ts                    ← All TypeScript interfaces
-  utils.ts                    ← Formatters, speaker colors, cn()
+  useAudioRecorder.ts         ← Captures mic and system audio display stream
+  useTimer.ts                 ← Session timer state
+  useProcessAudio.ts          ← Pipes data to endpoints with loader triggers
 ```
 
 ---
 
-## 🚀 Quick Start
+## 🚀 Quick Start Guide
 
 ### Prerequisites
+* [Node.js](https://nodejs.org/) v20+
+* [Supabase CLI](https://supabase.com/docs/guides/cli) & [Docker](https://www.docker.com/)
 
-- [Node.js](https://nodejs.org/) v20+
-- [Supabase CLI](https://supabase.com/docs/guides/cli) (for local DB)
-- [Docker](https://www.docker.com/) (for local Supabase)
+### Setup Instructions
 
-### Setup
-
-1. **Clone the repository**
+1. **Clone & Install Dependencies:**
    ```bash
    git clone https://github.com/DhanushSai-Chalasani/template-webapp.git
    cd template-webapp
-   ```
-
-2. **Install dependencies**
-   ```bash
    npm install
    ```
 
-3. **Start local Supabase**
+2. **Spin Up Local Database:**
    ```bash
    supabase start
    ```
 
-4. **Configure environment**
-   ```bash
-   cp .env.example .env.local
-   ```
-   Then edit `.env.local`:
+3. **Configure Environment Keys:**
+   Create a `.env.local` file in the root directory:
    ```env
-   NEXT_PUBLIC_SUPABASE_URL="http://127.0.0.1:54521"
-   NEXT_PUBLIC_SUPABASE_ANON_KEY="<your-anon-key>"
-   SUPABASE_SERVICE_ROLE_KEY="<your-service-role-key>"
-   GROQ_API_KEY="<your-groq-key>"
-   NVIDIA_API_KEY="<your-nvidia-key>"
+   NEXT_PUBLIC_SUPABASE_URL="http://127.0.0.1:54321"
+   NEXT_PUBLIC_SUPABASE_ANON_KEY="your-supabase-anon-key"
+   SUPABASE_SERVICE_ROLE_KEY="your-service-role-key"
+   GROQ_API_KEY="your-groq-key-here"
+   NVIDIA_API_KEY="your-nvidia-key-here"
    ```
 
-5. **Start development server**
+4. **Run the Development Server:**
+   Launch the development server:
    ```bash
    npm run dev
    ```
-
-6. **Open** [http://localhost:3000](http://localhost:3000) → click **"Start Recording"** → go to `/dashboard`
+   Open **[http://localhost:3000](http://localhost:3000)** in your browser, log in, and begin capturing your notes.
 
 ---
 
 ## 🔌 API Contract
 
-The frontend sends audio to `POST /api/process-audio` as `multipart/form-data`:
+The frontend posts audio to `/api/process-audio` as `multipart/form-data`:
 
-| Field | Type | Description |
-|---|---|---|
-| `audio` | Blob | Audio file (audio/webm) |
-| `name` | string | Meeting name |
-| `diarize` | boolean | Enable speaker diarization |
-| `actions` | boolean | Extract action items |
-| `language` | string | `"en"`, `"hi"`, `"es"`, `"fr"`, `"auto"` |
-| `style` | string | `"brief"`, `"detailed"`, `"bullet"` |
-
-The backend returns a `MeetingResult` JSON (see `lib/types.ts` for the full interface).
+| Field Name | Type | Description |
+| :--- | :---: | :--- |
+| `audio` | File / Blob | Audio recording file (`audio/webm` format) |
+| `name` | string | User-customized meeting or lecture name |
+| `diarize` | boolean | Toggle multi-speaker identification on/off |
+| `actions` | boolean | Toggle checklist action item extraction |
+| `language` | string | Target speech language (`"en"`, `"hi"`, `"es"`, `"fr"`, `"auto"`) |
+| `style` | string | Target summary layout style (`"brief"`, `"detailed"`, `"bullet"`) |
 
 ---
 
-## 👥 Team
-
-| Role | Scope |
-|---|---|
-| **Frontend Developer** | Dashboard UI, audio recording, results display, animations |
-| **Backend Developer** | `/api/process-audio` route, Groq/Whisper transcription, NVIDIA/Llama 3 summarization, Supabase storage |
-
----
-
-## 📝 Useful Commands
+## 👥 Useful Command Console
 
 ```bash
-npm run dev       # Start development server
-npm run build     # Build for production
-npm run lint      # Run ESLint
-supabase start    # Start local Supabase
-supabase stop     # Stop local Supabase
-supabase studio   # Open Supabase Studio
+npm run dev       # Start Next.js development server
+npm run build     # Compile production optimized bundles
+npm run lint      # Execute ESLint validations
+supabase start    # Start local docker database
+supabase stop     # Turn off local database
+supabase studio   # Open browser Supabase administrator tool
 ```
 
 ---
-
-## 📄 License
-
-Built for the 8x Engineer Hiring Challenge. Uses the [8x Hiring Template](https://github.com/8xsocial/template-webapp) as the foundation.
+*Created for the 8x Engineer Hiring Challenge. Built with premium standards by the Verbatim team. © 2026. All rights reserved.*
