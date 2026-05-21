@@ -21,9 +21,6 @@ export function ModeSelector({ mode, onChange, onFileSelect }: ModeSelectorProps
 
   const handleModeChange = useCallback((newMode: RecorderMode) => {
     onChange(newMode)
-    if (newMode === 'upload' && fileInputRef.current) {
-      fileInputRef.current.click()
-    }
   }, [onChange])
 
   const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {

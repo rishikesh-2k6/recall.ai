@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react"
 import Link from "next/link"
 import { motion, AnimatePresence } from "framer-motion"
-import { Clock, Users, FileText, ChevronRight, Search, RotateCcw, Trash2, Archive, Sparkles } from "lucide-react"
+import { Clock, Users, FileText, ChevronRight, Search, RotateCcw, Trash2, Archive, Sparkles, ArrowLeft } from "lucide-react"
 import { formatMinSec } from "@/lib/utils"
 import { toast } from "sonner"
 
@@ -92,6 +92,12 @@ export default function ArchivePage() {
     <div className="flex-1 p-6 lg:p-8 overflow-y-auto">
       {/* Header */}
       <div className="mb-8">
+        <Link
+          href="/dashboard"
+          className="inline-flex items-center gap-1 text-xs text-[var(--text3)] hover:text-[var(--accent)] transition-colors mb-4 group"
+        >
+          <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform" /> Back to Dashboard
+        </Link>
         <div className="flex items-center gap-2 mb-1">
           <Archive className="w-5 h-5 text-[var(--accent2)]" />
           <h1

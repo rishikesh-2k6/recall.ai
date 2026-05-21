@@ -29,7 +29,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className={`${serif.variable} ${sans.variable} ${mono.variable}`}>
+    <html lang="en" className={`${serif.variable} ${sans.variable} ${mono.variable}`} suppressHydrationWarning>
       <body className="antialiased flex flex-col min-h-screen" style={{ fontFamily: 'var(--font-sans)' }}>
         <AuthProvider>
           <ThemeProvider>

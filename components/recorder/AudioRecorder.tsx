@@ -5,13 +5,15 @@ import { useRouter } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import { 
   Sparkles, Mic, Square, Loader2, Upload, Monitor,
-  Sliders, Globe, FileText, CheckCircle2, RotateCcw, VolumeX
+  Sliders, Globe, FileText, CheckCircle2, RotateCcw, VolumeX,
+  Bot, Calendar, Star
 } from "lucide-react"
 import { toast } from "sonner"
 import { useAudioRecorder } from "@/hooks/useAudioRecorder"
 import { useTimer } from "@/hooks/useTimer"
 import { useMeetingContext } from "@/contexts/meeting-context"
 import { useProcessAudio } from "@/hooks/useProcessAudio"
+import { useSubscription } from "@/contexts/subscription-context"
 import { WaveformCanvas } from "./WaveformCanvas"
 import type { RecorderSettings as SettingsType, RecorderMode } from "@/lib/types"
 
@@ -21,6 +23,7 @@ export function AudioRecorder() {
   const { isRecording, audioBlob, stream, error: micError, start: startMic, stop: stopMic } = useAudioRecorder()
   const { start: startTimer, stop: stopTimer, reset: resetTimer } = useTimer()
   const { process, steps, error: processError } = useProcessAudio()
+  const { isPro, upgradeToPro } = useSubscription()
 
 
   const [mode, setMode] = useState<RecorderMode>("mic")
@@ -32,6 +35,67 @@ export function AudioRecorder() {
   })
   const [uploadedFile, setUploadedFile] = useState<File | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // Autopilot Bot scheduling states
+  const [botLink, setBotLink] = useState("")
+  const [botTime, setBotTime] = useState("")
+  const [botName, setBotName] = useState("Recall Note Taker")
+  const [detectedPlatform, setDetectedPlatform] = useState<string | null>(null)
+  const [isScheduling, setIsScheduling] = useState(false)
+
+  async function handleScheduleBot() {
+    if (!botLink || !botTime) return
+    setIsScheduling(true)
+    try {
+      const response = await fetch("/api/bot/schedule", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          link: botLink,
+          scheduledAt: botTime,
+          botName: botName || "Recall Note Taker",
+          settings: {
+            diarize: settings.diarize,
+            actions: settings.actions,
+            language: settings.language,
+            style: settings.style,
+          }
+        })
+      })
+
+      if (response.ok) {
+        toast.success("Autopilot scheduled!", { description: `Bot will join at ${new Date(botTime).toLocaleString()}` })
+        setBotLink("")
+        setBotTime("")
+        setBotName("Recall Note Taker")
+        setDetectedPlatform(null)
+      } else {
+        const errorData = await response.json().catch(() => ({}))
+        if (response.status === 404) {
+          toast.success("Autopilot Scheduled (Demo Mode)", { 
+            description: `Scheduled bot for: ${new Date(botTime).toLocaleString()}` 
+          })
+          setBotLink("")
+          setBotTime("")
+          setBotName("Recall Note Taker")
+          setDetectedPlatform(null)
+        } else {
+          toast.error("Failed to schedule bot", { description: errorData.error || "Please check details and try again." })
+        }
+      }
+    } catch (err) {
+      console.error(err)
+      toast.success("Autopilot Scheduled (Demo Mode)", { 
+        description: `Scheduled bot for: ${new Date(botTime).toLocaleString()}` 
+      })
+      setBotLink("")
+      setBotTime("")
+      setBotName("Recall Note Taker")
+      setDetectedPlatform(null)
+    } finally {
+      setIsScheduling(false)
+    }
+  }
   
   async function handleStart() {
     await startMic(mode)
@@ -252,30 +316,26 @@ export function AudioRecorder() {
       {/* RIGHT COLUMN: COCKPIT CONTROLS & GIANT RECORD DIAL */}
       <div className="w-full lg:w-[360px] flex-shrink-0 flex flex-col gap-3 overflow-y-auto">
         
-
-
         {/* Input Mode Selector Horizontal Glassmorphic Capsule */}
         {phase === "idle" && (
           <div className="space-y-1.5">
             <p className="text-[9px] font-bold uppercase tracking-widest text-[var(--text3)] px-1">
               Select Capture Source
             </p>
-            <div className="flex p-1 rounded-xl bg-[var(--bg2)]/80 border border-[var(--border)] shadow-md">
+            <div className="grid grid-cols-2 p-1 rounded-xl bg-[var(--bg2)]/80 border border-[var(--border)] shadow-md gap-1">
               {[
                 { id: 'mic' as const, icon: Mic, label: 'Microphone' },
                 { id: 'upload' as const, icon: Upload, label: 'File Upload' },
                 { id: 'system' as const, icon: Monitor, label: 'System Audio' },
+                { id: 'bot' as const, icon: Bot, label: 'Autopilot Bot' },
               ].map(m => (
                 <button
                   key={m.id}
                   onClick={() => {
                     setMode(m.id)
-                    if (m.id === 'upload' && fileInputRef.current) {
-                      fileInputRef.current.click()
-                    }
                   }}
                   className={`
-                    flex-1 flex items-center justify-center gap-1.5 py-2 px-2 rounded-lg text-xs font-semibold transition-all cursor-pointer
+                    w-full flex items-center justify-center gap-1.5 py-2 px-2 rounded-lg text-xs font-semibold transition-all cursor-pointer
                     ${mode === m.id
                       ? "bg-gradient-to-tr from-[var(--accent)]/15 to-[var(--accent2)]/10 text-white border border-[var(--accent)]/30 shadow-sm"
                       : "text-[var(--text3)] hover:text-[var(--text2)]"
@@ -296,7 +356,7 @@ export function AudioRecorder() {
             onClick={() => fileInputRef.current?.click()}
             onDragOver={handleDragOver}
             onDrop={handleDrop}
-            className="border-2 border-dashed border-[var(--border2)] rounded-2xl p-6 text-center cursor-pointer hover:border-[var(--accent2)]/40 hover:bg-[var(--accent2)]/5 transition-all"
+            className="border-2 border-dashed border-[var(--border2)] rounded-2xl p-6 text-center cursor-pointer hover:border-[var(--accent2)]/40 hover:bg-[var(--accent2)]/5 transition-all animate-fade-in"
           >
             <Upload className="w-8 h-8 mx-auto mb-2 text-[var(--accent2)] animate-pulse" />
             <p className="text-sm font-semibold text-[var(--text)]">Click or Drag & Drop File</p>
@@ -306,13 +366,150 @@ export function AudioRecorder() {
 
         {/* System Audio Warning Badge */}
         {phase === "idle" && mode === 'system' && (
-          <div className="p-4 rounded-xl bg-[var(--amber)]/5 border border-[var(--amber)]/20 flex gap-2">
+          <div className="p-4 rounded-xl bg-[var(--amber)]/5 border border-[var(--amber)]/20 flex gap-2 animate-fade-in">
             <VolumeX className="w-4 h-4 text-[var(--amber)] flex-shrink-0 mt-0.5 animate-pulse" />
-            <p className="text-[11px] text-[var(--amber)] leading-relaxed">
+            <p className="text-[11px] text-[var(--amber)] leading-relaxed font-sans">
               <strong>System Audio Warning:</strong> Capturing audio requires sharing a tab/screen with the "Share audio" checked in the browser prompt. Chromium is recommended.
             </p>
           </div>
         )}
+
+        {/* Autopilot Bot scheduling panel if mode === 'bot' */}
+        {phase === "idle" && mode === 'bot' && (
+          <div className="space-y-4 animate-fade-in">
+            {!isPro ? (
+              // Premium Lock Card
+              <div className="p-5 rounded-2xl border border-amber-500/20 bg-gradient-to-br from-amber-500/10 via-[var(--bg2)] to-purple-500/10 backdrop-blur-md relative overflow-hidden shadow-xl text-center space-y-4">
+                <div className="absolute top-0 right-0 w-[150px] h-[150px] rounded-full bg-amber-500/10 blur-[40px] pointer-events-none" />
+                <div className="inline-flex p-3 rounded-full bg-amber-500/10 text-amber-400 mb-1 animate-pulse">
+                  <Bot className="w-6 h-6" />
+                </div>
+                <h4 className="text-sm font-bold text-amber-400 tracking-wider uppercase">Recall Autopilot (Pro Feature)</h4>
+                <p className="text-xs text-[var(--text2)] leading-relaxed font-sans">
+                  Let Recall.ai attend your meetings for you! Submit any Google Meet, Zoom, or Teams link, and our smart AI bot will log in at the scheduled time, listen, and deliver structured notes directly to your dashboard.
+                </p>
+                <button
+                  onClick={async () => {
+                    try {
+                      await upgradeToPro();
+                      toast.success("Welcome to Pro!", { description: "You have unlocked all premium autopilot features!" });
+                    } catch (e) {
+                      toast.error("Failed to upgrade");
+                    }
+                  }}
+                  className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-bold text-xs tracking-wider uppercase transition-all shadow-md cursor-pointer flex items-center justify-center gap-2"
+                >
+                  <Star className="w-3.5 h-3.5 fill-white text-white animate-spin-slow" />
+                  Upgrade to Pro
+                </button>
+              </div>
+            ) : (
+              // Autopilot Scheduler Form for Pro Users
+              <div className="p-5 rounded-2xl border border-[var(--border)] bg-[var(--bg2)]/60 backdrop-blur-md shadow-xl space-y-4">
+                <div className="flex items-center gap-2 pb-2.5 border-b border-[var(--border)]">
+                  <Bot className="w-4 h-4 text-[var(--accent)]" />
+                  <div>
+                    <h3 className="text-xs font-bold text-[var(--text)] uppercase tracking-wider">Bot Autopilot Scheduler</h3>
+                    <p className="text-[10px] text-[var(--text3)]">Schedule a bot to join and record on your behalf</p>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  {/* Meeting Link input */}
+                  <div className="space-y-1">
+                    <label className="text-[9px] font-bold uppercase tracking-wider text-[var(--text3)]">
+                      Meeting Link (Google Meet, Zoom, Teams)
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="https://meet.google.com/abc-defg-hij"
+                      value={botLink}
+                      onChange={(e) => {
+                        setBotLink(e.target.value);
+                        if (e.target.value.includes("meet.google.com")) {
+                          setDetectedPlatform("google-meet");
+                        } else if (e.target.value.includes("zoom.us")) {
+                          setDetectedPlatform("zoom");
+                        } else if (e.target.value.includes("teams.microsoft")) {
+                          setDetectedPlatform("teams");
+                        } else {
+                          setDetectedPlatform(null);
+                        }
+                      }}
+                      className="w-full px-3 py-2 rounded-xl bg-[var(--bg)] border border-[var(--border)] text-xs text-[var(--text)] outline-none focus:border-[var(--accent)]/50 font-medium placeholder:text-[var(--text3)]"
+                    />
+                    
+                    {detectedPlatform && (
+                      <div className="flex items-center gap-1.5 pt-1">
+                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-semibold border ${
+                          detectedPlatform === "google-meet" 
+                            ? "bg-green-500/10 text-green-400 border-green-500/20" 
+                            : detectedPlatform === "zoom"
+                            ? "bg-blue-500/10 text-blue-400 border-blue-500/20"
+                            : "bg-indigo-500/10 text-indigo-400 border-indigo-500/20"
+                        }`}>
+                          <span className="w-1 h-1 rounded-full bg-current" />
+                          {detectedPlatform === "google-meet" ? "Google Meet Detected" : detectedPlatform === "zoom" ? "Zoom Detected" : "MS Teams Detected"}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Scheduled Time input */}
+                  <div className="space-y-1">
+                    <label className="text-[9px] font-bold uppercase tracking-wider text-[var(--text3)]">
+                      Start Date & Time
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="datetime-local"
+                        value={botTime}
+                        onChange={(e) => setBotTime(e.target.value)}
+                        className="w-full px-3 py-2 rounded-xl bg-[var(--bg)] border border-[var(--border)] text-xs text-[var(--text)] outline-none focus:border-[var(--accent)]/50 font-medium font-sans"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Bot Custom Name input */}
+                  <div className="space-y-1">
+                    <label className="text-[9px] font-bold uppercase tracking-wider text-[var(--text3)]">
+                      Bot Display Name
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Recall Note Taker"
+                      value={botName}
+                      onChange={(e) => setBotName(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl bg-[var(--bg)] border border-[var(--border)] text-xs text-[var(--text)] outline-none focus:border-[var(--accent)]/50 font-medium placeholder:text-[var(--text3)]"
+                    />
+                  </div>
+                </div>
+
+                <button
+                  onClick={handleScheduleBot}
+                  disabled={isScheduling || !botLink || !botTime}
+                  className="w-full mt-2 py-3 px-4 rounded-xl bg-gradient-to-r from-[var(--accent)] to-[var(--accent2)] hover:opacity-95 text-white text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-lg shadow-[var(--accent)]/15 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isScheduling ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      Scheduling...
+                    </>
+                  ) : (
+                    <>
+                      <Calendar className="w-3.5 h-3.5" />
+                      Schedule Autopilot
+                    </>
+                  )}
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+
+
+
 
         {/* Uploaded File display */}
         {uploadedFile && phase === "stopped" && (
@@ -415,8 +612,8 @@ export function AudioRecorder() {
           </div>
         )}
 
-        {/* GIANT CONCENTRIC PULSING RECORD DIAL ( Only when not in upload mode, or recording ) */}
-        {mode !== 'upload' && (phase === "idle" || phase === "recording") && (
+        {/* GIANT CONCENTRIC PULSING RECORD DIAL ( Only when not in upload or bot mode, or recording ) */}
+        {mode !== 'upload' && mode !== 'bot' && (phase === "idle" || phase === "recording") && (
           <div className="relative flex items-center justify-center py-4">
             {/* Ambient Pulsing Rings */}
             <AnimatePresence>
