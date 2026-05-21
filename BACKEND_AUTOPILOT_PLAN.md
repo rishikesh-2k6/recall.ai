@@ -233,11 +233,92 @@ Instead of paying for expensive speech-to-text models (like Whisper or Deepgram)
 
 ---
 
-## 🚀 6. Steps to Launch
+## 📁 6. Google Docs Export Integration (API Deliverable)
+To satisfy the export requirement from the product brief, implement an export API endpoint at `POST /api/export/google-docs` so users can instantly sync notes to their Google Drive.
+
+### Node.js Google Docs API Implementation Guide
+1. **Packages:** Install Google's official packages:
+   ```bash
+   npm install googleapis
+   ```
+2. **Implementation Script:** Create a route under `app/api/export/google-docs/route.ts` that retrieves the meeting data from Supabase, initializes Google OAuth2 authentication, creates a new document, and inserts formatted text:
+   ```typescript
+   import { NextRequest, NextResponse } from "next/server";
+   import { createClient } from "@/lib/supabase/server";
+   import { google } from "googleapis";
+
+   export async function POST(req: NextRequest) {
+     const supabase = await createClient();
+     const { data: { user } } = await supabase.auth.getUser();
+     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+     const { meetingId, googleToken } = await req.json();
+
+     // Fetch the meeting data
+     const { data: meeting } = await supabase
+       .from("meetings").select("*").eq("id", meetingId).single();
+
+     if (!meeting) {
+       return NextResponse.json({ error: "Meeting not found" }, { status: 404 });
+     }
+
+     // Initialize Google Auth using user's access token
+     const oauth2Client = new google.auth.OAuth2();
+     oauth2Client.setCredentials({ access_token: googleToken });
+     const docs = google.docs({ version: "v1", auth: oauth2Client });
+
+     try {
+       // 1. Create a blank Google Document
+       const newDoc = await docs.documents.create({
+         requestBody: { title: `${meeting.name} — AI Meeting Notes` },
+       });
+       const documentId = newDoc.data.documentId;
+
+       // 2. Format and insert text via batchUpdate requests
+       const summaryText = meeting.tldr || "";
+       const actionsText = (meeting.action_items || [])
+         .map((item: any) => `[${item.priority.toUpperCase()}] ${item.text}`)
+         .join("\n");
+
+       const bodyText = `${meeting.name}\n\nSUMMARY\n${summaryText}\n\nACTION ITEMS\n${actionsText || "None"}\n`;
+
+       const requests = [
+         {
+           insertText: {
+             endOfSegmentLocation: {},
+             text: bodyText,
+           },
+         },
+         {
+           updateParagraphStyle: {
+             range: { startIndex: 1, endIndex: meeting.name.length + 1 },
+             paragraphStyle: { namedStyleType: "TITLE" },
+             fields: "namedStyleType",
+           },
+         },
+       ];
+
+       await docs.documents.batchUpdate({
+         documentId: documentId!,
+         requestBody: { requests },
+       });
+
+       return NextResponse.json({ url: `https://docs.google.com/document/d/${documentId}/edit` });
+     } catch (err: any) {
+       console.error("Google Docs Export Error:", err);
+       return NextResponse.json({ error: err.message || "Failed to create Google Doc" }, { status: 500 });
+     }
+   }
+   ```
+
+---
+
+## 🚀 7. Steps to Launch
 1. **Apply Migrations:** Run the migration script in `supabase/migrations/20260521_create_bot_schedules_table.sql`.
 2. **Build `/api/bot/schedule`:** We have pre-coded this route inside `app/api/bot/schedule/route.ts` with Supabase integration and dynamic mock fallbacks. Feel free to refactor it to interface directly with your queue service.
 3. **Deploy Worker Service:** Deploy a background service on your free OCI instance containing the Playwright bot orchestration script and the Redis listener.
 4. **Link Storage & Notes:** Once the Gemini API returns the JSON result, upload the `.wav` file to Supabase storage, insert the meeting record into the `meetings` table, and update the schedule status to `completed` in `bot_schedules`.
+5. **Integrate Exports:** Build out `app/api/export/notion/route.ts` (complete) and `app/api/export/google-docs/route.ts` using the provided developer schemas above.
 
 ---
 *For any questions regarding the API integration, please consult the frontend developer or refer to the existing `app/api/process-audio/route.ts` routing files.*
