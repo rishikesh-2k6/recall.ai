@@ -98,7 +98,8 @@ export function AudioRecorder() {
   }
   
   async function handleStart() {
-    await startMic(mode)
+    if (mode === "bot") return
+    await startMic(mode as "mic" | "system" | "upload")
     startTimer()
     setPhase("recording")
     const toastMsg = mode === "system"
