@@ -1,125 +1,139 @@
-# Verbatim — Enterprise AI Meeting & Lecture Note Taker
+# Recall.ai — Enterprise AI Meeting Intelligence & Vector Search (Vault)
 
 <div align="center">
 
-[![Next.js](https://img.shields.io/badge/Next.js-16-000000?style=for-the-badge&logo=nextdotjs&logoColor=white)](https://nextjs.org/)
+[![Next.js](https://img.shields.io/badge/Next.js-16_App_Router-000000?style=for-the-badge&logo=nextdotjs&logoColor=white)](https://nextjs.org/)
 [![Supabase](https://img.shields.io/badge/Supabase-v2-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)](https://supabase.com/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-v4-38B2AC?style=for-the-badge&logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
 [![Groq Whisper](https://img.shields.io/badge/Groq-Whisper_v3-7C6EF0?style=for-the-badge)](https://groq.com/)
 [![NVIDIA Llama](https://img.shields.io/badge/NVIDIA-LLaMA_3-76B900?style=for-the-badge&logo=nvidia&logoColor=white)](https://nvidia.com/)
 
-**Focus on the meeting, we’ll take the notes.** A high-fidelity, split-panel web companion that captures room and system audio, processes smart speaker diarization, generates chronologues, extracts actionable tasks, and supports RAG-powered vector search across your history.
+**Focus on the meeting, we’ll take the notes.** Recall.ai is a high-fidelity, split-panel developer companion that captures room and system audio, processes smart speaker diarization, generates chronologues, extracts actionable tasks, and supports highly optimized, pre-filtered database-level vector RAG search (Vault) across your meeting archives.
 
 ---
 </div>
 
-## 🌌 Overview
+## 🌌 Platform Overview
 
-Verbatim is a premium Next.js and Supabase web application styled with vibrant HSL dark modes, responsive framer-motion micro-animations, and glassmorphic card overlays. It is designed to clone and enhance the iOS *Summary: AI Meeting Note Taker* app experience on the web. 
+Recall.ai is a premium Next.js and Supabase web application styled with curated dark modes, custom HSL palettes, responsive `framer-motion` micro-animations, and sleek glassmorphic overlays. 
 
-By integrating high-performance local compression with advanced serverless LLM pipelines, it processes minutes of dialogue in seconds, yielding structured summaries, checkable action items, speaker analytics, and seamless Notion sync.
+By integrating high-performance client-side voice codecs with advanced serverless LLM pipelines, it processes hours of dialogue in seconds, producing highly structured meeting transcripts, prioritized checklists, speaker analytics, and automated third-party workspace synchronization.
 
 ---
 
-## ✨ Features
+## ⚡ Key Technical Milestones
 
-### 🎤 Capture & Compression
-* **Live Microphone Recording:** One-tap room audio capture with a real-time Web Audio API frequency waveform visualizer canvas.
-* **Pre-recorded File Uploads:** Drop-in processing for `.mp3`, `.wav`, `.m4a`, `.webm`, and `.mp4` video/audio up to a secure **25 MB** boundary.
-* **Active System Audio Recording:** Built-in loopback capture (screen audio) utilizing browser `getDisplayMedia` to record online conference calls (Google Meet, Zoom, MS Teams).
-* **32kbps Mono Vocal Compression:** Integrates a client-side codec in `MediaRecorder` that slashes audio payloads by **up to 80%** while preserving vocal readability for AI speech-to-text.
+### 🧠 Vault RAG Vector Search (v2 Upgraded)
+We engineered an optimized Retrieval-Augmented Generation (RAG) vector engine utilizing local PostgreSQL functions (`pgvector`) to deliver instant answers from meeting contexts.
+* **Pre-Filtering Optimization:** Rather than fetching database rows and post-filtering results in JavaScript (which wastes database bandwidth and can cut off relevant matches), filters are compiled and evaluated **directly inside the SQL queries**.
+* **Flexible Search Query Parameters:** Supports filtering by date ranges (start and end times), specific category tags (e.g., `"Work"`, `"Lecture"`, `"Personal"`), and restricting search bounds to a single meeting session.
+* **Advanced Fallback Handler:** Implemented an API-level automatic fallback to the V1 matching function (`match_meeting_embeddings`) if the V2 database schema migrations have not been applied on local developer environments, ensuring zero downtime.
 
-### 🧠 AI Analytics Workspace
-* **Chronological TLDR:** A concise paragraph summarizing core takeaways alongside a highlighted **Featured Key Quote**.
-* **Speaker Diarization:** Diarizes conversations into color-coded speaker logs showing who spoke and when.
-* **Checkable Action Items:** Interactive task checklist highlighting prioritization tags (`High`, `Medium`, `Low`) and contextually inferred task assignees.
-* **Deep Insights Panel:** Comprehensive analytics capturing:
-  * **Overall Sentiment:** Color-coded emotional index (🟢 *Aligned*, 🟡 *Uncertain*, 🔴 *Tense*, ⚪ *Neutral*).
-  * **Roadmap Decisions Log:** Formal milestones, timelines, and commitments made.
-  * **Potential Risks:** Warning list of roadblocks, technical debt, and schedule threats.
-  * **Talk Ratio Metrics:** Interactive percentage-based participation charts.
-
-### 🔍 History & RAG Semantic Search
-* **Database Archiving:** Syncs all processed notes, audio logs, and metrics directly to a secure PostgreSQL Supabase DB.
-* **Vault AI Semantic Search:** A built-in **RAG (Retrieval-Augmented Generation)** search engine. By typing questions ending with `?` (e.g., *“What did we decide about the budget?”*), Verbatim queries vector databases, feeds transcript contexts into LLaMA 3, and returns a synthesized paragraph-long answer.
-* **Sentiment Filters:** Instantly filter your entire dashboard history using sentiment pill badges (*All / Aligned / Tense / Uncertain*).
-
-### 🌐 Exports & Integrations
-* **Copy-to-Clipboard Actions:** Separate triggers to copy the summary (GFM markdown), transcript (timestamped logs), or prioritized actions.
-* **File Downloads:** Instant local exports in clean `.txt` or high-fidelity GitHub-Flavored Markdown `.md` sheets.
-* **Notion Workspace Integration:** Connect and sync completed notes directly into your Notion database with automatic loading and success notifications.
+### 🎤 Capture, Compression & Diarization
+* **Audio Loopback Capture:** Captures native system audio directly via browser `getDisplayMedia` to record active Google Meet, Zoom, or Microsoft Teams calls.
+* **Vocal Codec Compression:** Integrates a client-side Mono Vocal compressor in `MediaRecorder` that reduces audio payloads by **up to 80%** (32kbps mono) while preserving speech recognition readability.
+* **Multi-Speaker Analytics:** Automatically diarizes conversations into color-coded timelines mapped to estimated speaker profiles, generating dynamic talk ratios and sentiment tracking indices.
 
 ---
 
 ## 🔒 Security Hardening
 
-Verbatim has been rigorously audited and secured against modern web vulnerabilities:
+Recall.ai has been rigorously audited and secured against modern web vulnerabilities:
 
 | Severity | Vulnerability | Resolution |
 | :---: | :--- | :--- |
-| **Critical** | Route Access Bypass | Implemented root Next.js `middleware.ts` to block unauthorized users from `/dashboard`, `/meetings`, `/profile`, and `/upgrade`. |
+| **Critical** | Route Access Bypass | Implemented root Next.js `middleware.ts` to block unauthorized users from accessing `/dashboard`, `/meetings`, `/profile`, and `/upgrade`. |
 | **Critical** | Billing Escalation | Disabled direct client-side DB writes for tier states. Created secure server-side `/api/account/upgrade` and `/api/account/downgrade` routes. |
 | **Critical** | File Upload DOS | Added strict **25 MB** upload limits and dynamic MIME-type extensions filters in `/api/process-audio/route.ts`. |
-| **High** | Open Redirect | Sanitized and validated `returnUrl` parameters inside route controllers. |
 | **High** | Prompt Injection | Isolated system instructions from user inputs by packing raw transcript blocks inside strict `<transcript>` tags. |
+| **High** | Open Redirect | Sanitized and validated `returnUrl` parameters inside route controllers. |
 
 ---
 
 ## 🛠 Tech Stack
 
-* **Frontend Framework:** Next.js 16 (App Router) + React 19 + TypeScript
-* **Styling:** CSS-First Tailwind CSS + custom glassmorphic CSS variables
-* **Database & Auth:** Supabase SSR Auth + PostgreSQL (pgvector support ready)
-* **Audio Engineering:** HTML5 Web Audio API + `MediaRecorder` + Canvas `AnalyserNode`
-* **Animations:** Framer Motion (staggered transitions, hover triggers, pulse loops)
-* **Speech-to-Text (STT):** Groq API (Whisper-v3 Cloud Integration)
-* **LLM Engine:** NVIDIA API (LLaMA 3 NIM)
-* **Integrations:** Official Notion Workspace API Client
+* **Frontend:** Next.js 16 (App Router) + React 19 + TypeScript
+* **Styling:** CSS-First Tailwind CSS (v4) + premium HSL custom variables
+* **Database & Auth:** Supabase SSR Auth + PostgreSQL with `pgvector`
+* **Audio Engineering:** HTML5 Web Audio API + Web Analyser Node (Waveform Visualizer Canvas)
+* **LLM Pipelines:** Groq API (Whisper-v3 speech-to-text) + NVIDIA LLaMA 3 NIM Models
+* **Type Safety:** High-level compile checks with zero-error validation (`npx tsc --noEmit`)
 
 ---
 
-## 📁 Architecture Directory Map
+## 📁 Repository Blueprint
 
 ```
 /app
   /dashboard
-    page.tsx                  ← Split-panel recording & details view
+    page.tsx                  ← Split-panel recorder & current session analytics
     layout.tsx                ← Sidebar + topbar layout wrapper
   /meetings
-    page.tsx                  ← History explorer & Vault AI Search (RAG)
-    /[id]                     ← Saved meeting detailed sheet & export actions
+    page.tsx                  ← Meeting archive explorer & Vault AI Search (RAG)
+    /[id]                     ← Detailed saved notes, transcript logs & export actions
   /api
     /process-audio
-      route.ts                ← Secure 25MB validation & Groq/Nvidia pipeline
+      route.ts                ← Secure 25MB validation & AI analytics orchestrator
+    /vault-search
+      route.ts                ← Upgraded vector search endpoint with dynamic filtering
     /account
-      /upgrade                ← Server-side subscription validator
+      /upgrade                ← Server-side stripe/subscription validator
       /downgrade              ← Secure tier downgrade router
-  layout.tsx                  ← Fonts, global CSS tokens, providers
-  globals.css                 ← CSS design variables & base styles
+  layout.tsx                  ← Global fonts, styles, and HTML metadata
+  globals.css                 ← Root CSS variables & glassmorphic tokens
 
 /components
   /recorder
-    AudioRecorder.tsx         ← Recorder coordinator
+    AudioRecorder.tsx         ← Recorder coordinator & modes
     WaveformCanvas.tsx        ← Frequency waveform visualizer
-    RecordButton.tsx          ← Animated trigger button
-    TimerDisplay.tsx          ← HH:MM:SS stopwatch
-    ModeSelector.tsx          ← Mic / Upload / System selector
-    RecorderSettings.tsx      ← AI parameters toggles
+    RecordButton.tsx          ← Staggered animated trigger button
   /results
-    ResultsPanel.tsx          ← Analytical tabs panel
+    ResultsPanel.tsx          ← Summary, Action Items, & Insights tab panel
     TLDRCard.tsx              ← Summaries & quote cards
-    TranscriptView.tsx        ← Timestamped searchable dialogue
+    TranscriptView.tsx        ← Searchable dialogue with speaker diarization
     ActionItemList.tsx        ← Interactive prioritized checklist
-    InsightsPanel.tsx         ← Sentiment & talk ratio graphs
-    SpeakerChips.tsx          ← Speaker identification badges
-    StatsRow.tsx              ← Meet length, words, and speaker metrics
   /shared
-    ProcessingState.tsx       ← Animated step timeline
+    ProcessingState.tsx       ← Stepped processing loader timeline
 
-/hooks
-  useAudioRecorder.ts         ← Captures mic and system audio display stream
-  useTimer.ts                 ← Session timer state
-  useProcessAudio.ts          ← Pipes data to endpoints with loader triggers
+/supabase
+  /migrations
+    20260521_optimize_rag...sql  ← SQL script declaring custom 'match_meeting_embeddings_v2' RPC
+```
+
+---
+
+## 🔌 API Contract: Vault Vector Search
+
+### `POST /api/vault-search`
+
+**Request Body:**
+```json
+{
+  "query": "What did we decide about the timeline?",
+  "meetingId": "Optional-meeting-UUID-to-filter-locally",
+  "dateRange": {
+    "start": "2026-05-20T00:00:00Z",
+    "end": "2026-05-21T23:59:59Z"
+  },
+  "category": "Work",
+  "matchThreshold": 0.35,
+  "matchCount": 5
+}
+```
+
+**Response Body:**
+```json
+{
+  "answer": "Based on our sync on May 21st, the team decided to push the beta deployment to next Tuesday...",
+  "sources": [
+    {
+      "id": "meeting-uuid-1",
+      "name": "Autopilot Roadmap Sync",
+      "created_at": "2026-05-21T11:45:00Z",
+      "similarity": 0.842
+    }
+  ]
+}
 ```
 
 ---
@@ -134,18 +148,17 @@ Verbatim has been rigorously audited and secured against modern web vulnerabilit
 
 1. **Clone & Install Dependencies:**
    ```bash
-   git clone https://github.com/DhanushSai-Chalasani/template-webapp.git
-   cd template-webapp
+   git clone https://github.com/DhanushSai-Chalasani/Recall.ai.git
+   cd Recall.ai
    npm install
    ```
 
-2. **Spin Up Local Database:**
+2. **Spin Up Local Database & Run Migrations:**
    ```bash
    supabase start
    ```
 
-3. **Configure Environment Keys:**
-   Create a `.env.local` file in the root directory:
+3. **Configure Environment Keys (`.env.local`):**
    ```env
    NEXT_PUBLIC_SUPABASE_URL="http://127.0.0.1:54321"
    NEXT_PUBLIC_SUPABASE_ANON_KEY="your-supabase-anon-key"
@@ -154,40 +167,33 @@ Verbatim has been rigorously audited and secured against modern web vulnerabilit
    NVIDIA_API_KEY="your-nvidia-key-here"
    ```
 
-4. **Run the Development Server:**
-   Launch the development server:
+4. **Launch Development Server:**
    ```bash
    npm run dev
    ```
-   Open **[http://localhost:3000](http://localhost:3000)** in your browser, log in, and begin capturing your notes.
+   Open **[http://localhost:3000](http://localhost:3000)** in your browser, create an account, and start capturing meetings.
 
 ---
 
-## 🔌 API Contract
+## 🗺 Active Roadmap Features
 
-The frontend posts audio to `/api/process-audio` as `multipart/form-data`:
+Developers on Recall.ai are actively building these production-ready pipelines next:
 
-| Field Name | Type | Description |
-| :--- | :---: | :--- |
-| `audio` | File / Blob | Audio recording file (`audio/webm` format) |
-| `name` | string | User-customized meeting or lecture name |
-| `diarize` | boolean | Toggle multi-speaker identification on/off |
-| `actions` | boolean | Toggle checklist action item extraction |
-| `language` | string | Target speech language (`"en"`, `"hi"`, `"es"`, `"fr"`, `"auto"`) |
-| `style` | string | Target summary layout style (`"brief"`, `"detailed"`, `"bullet"`) |
+* **⚡ Headless Autopilot bot (`BullMQ + Redis`):** Provisioning dockerized headless browser agents that can join external video conferences autonomously via invites.
+* **📄 Google Docs Integration (`POST /api/export/google-docs`):** Developing custom exporters utilizing the official Google Auth and Google Docs APIs to generate formatted layouts from meetings.
+* **📊 Slack & Notion Webhook Pipeline:** Real-time event notifications for high-priority checklist action items.
 
 ---
 
-## 👥 Useful Command Console
+## 👥 Essential Commands
 
 ```bash
-npm run dev       # Start Next.js development server
-npm run build     # Compile production optimized bundles
-npm run lint      # Execute ESLint validations
-supabase start    # Start local docker database
-supabase stop     # Turn off local database
-supabase studio   # Open browser Supabase administrator tool
+npm run dev          # Start Next.js development server
+npm run build        # Compile production-optimized code
+npx tsc --noEmit     # Verify strict TypeScript safety (Keep at zero errors!)
+npm run lint         # Run ESLint validation checks
+supabase studio      # Open local DB browser dashboard
 ```
 
 ---
-*Created for the 8x Engineer Hiring Challenge. Built with premium standards by the Verbatim team. © 2026. All rights reserved.*
+*Developed under premium developer standards by the Recall.ai team. © 2026. All rights reserved.*
