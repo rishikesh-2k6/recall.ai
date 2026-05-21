@@ -1,9 +1,9 @@
-# Verbatim — The AI Meeting & Lecture Note Taker
+# Recall.ai — The AI Meeting & Lecture Note Taker
 ### Official User Guide & System Documentation
 
-Welcome to **Verbatim**, a premium, AI-powered meeting and lecture companion built with Next.js, Supabase, Tailwind CSS, Groq Whisper, and NVIDIA LLaMA 3. 
+Welcome to **Recall.ai**, a premium, AI-powered meeting and lecture companion built with Next.js, Supabase, Tailwind CSS, Groq Whisper, and NVIDIA LLaMA 3. 
 
-This guide provides a comprehensive overview of how to capture, process, search, and export your audio notes. Whether you are daily-syncing with your team, recording a candidate interview, or capturing a 2-hour university lecture, Verbatim automates the structural analysis of your conversations so you can focus on the meeting itself.
+This guide provides a comprehensive overview of how to capture, process, search, and export your audio notes. Whether you are daily-syncing with your team, recording a candidate interview, or capturing a 2-hour university lecture, Recall.ai automates the structural analysis of your conversations so you can focus on the meeting itself.
 
 ---
 
@@ -23,7 +23,7 @@ This guide provides a comprehensive overview of how to capture, process, search,
 
 ## 1. Key Features & Design System
 
-Verbatim is designed with premium, high-fidelity visual aesthetics (harmonious dark themes, elegant transitions, and fluid animations).
+Recall.ai is designed with premium, high-fidelity visual aesthetics (harmonious dark themes, elegant transitions, and fluid animations).
 
 ```mermaid
 graph TD
@@ -53,7 +53,7 @@ graph TD
 3. Connect your account via the **Log in** button on the navbar. If you do not have an account, the authentication middleware will guide you to set up a secure profile.
 
 > [!NOTE]
-> Verbatim uses Supabase SSR Authentication to protect user workspaces. All dashboard, meeting detailed sheets, and settings require an authenticated session.
+> Recall.ai uses Supabase SSR Authentication to protect user workspaces. All dashboard, meeting detailed sheets, and settings require an authenticated session.
 
 ---
 
@@ -105,7 +105,7 @@ Under **Recorder Settings**, toggles are available to fine-tune the AI execution
 
 ## 5. The AI Processing Pipeline
 
-When you click **Process with AI**, Verbatim initiates a secure, multi-stage transaction:
+When you click **Process with AI**, Recall.ai initiates a secure, multi-stage transaction:
 
 ```
 [Audio Capture] ➔ [32kbps Vocal Compression] ➔ [Groq Whisper (STT)] ➔ [LLaMA 3 (Nvidia NIM)] ➔ [Structured JSON Output]
@@ -164,13 +164,13 @@ The **Meeting History** tab (`/meetings`) houses your secure meeting vault.
 ```
 
 ### Vault AI Search (RAG Engine)
-You can search previous records by matching titles. However, the true power of Verbatim lies in **Vault AI Search**:
+You can search previous records by matching titles. However, the true power of Recall.ai lies in **Vault AI Search**:
 1. Type a natural language question in the search bar ending with a question mark (`?`), for example:
    * *“What did we decide about the budget?”*
    * *“Who is responsible for the API deployment?”*
    * *“What was the main topic of the marketing brainstorm?”*
 2. Press the **Send (arrow)** button or hit **Enter**.
-3. Verbatim's RAG system performs a semantic lookup across all your historical meeting transcripts, feeds the relevant contexts into the AI, and outputs a synthesized, paragraph-long **Vault AI** answer directly in an animated card.
+3. Recall.ai's RAG system performs a semantic lookup across all your historical meeting transcripts, feeds the relevant contexts into the AI, and outputs a synthesized, paragraph-long **Vault AI** answer directly in an animated card.
 
 ### Sentiment Filters
 Quickly filter your entire history using sentiment tags on the top right:
@@ -201,7 +201,7 @@ You can export your completed meeting notes using the premium **Export** dropdow
 
 ## 9. Subscription Tiers (Free vs. Pro)
 
-Verbatim offers flexible tiers depending on your organization's note-taking requirements:
+Recall.ai offers flexible tiers depending on your organization's note-taking requirements:
 
 | Feature | Free Tier | Pro Tier ($9.99/mo) |
 | :--- | :---: | :---: |
@@ -216,7 +216,7 @@ Verbatim offers flexible tiers depending on your organization's note-taking requ
 
 ## 10. Troubleshooting & Best Practices
 
-To get the absolute best results from Verbatim, consider the following technical recommendations:
+To get the absolute best results from Recall.ai, consider the following technical recommendations:
 
 > [!TIP]
 > **Microphone Placement:** For clear speaker diarization, ensure the microphone is placed centrally in the meeting room or use a dedicated USB boundary mic.
@@ -232,4 +232,4 @@ To get the absolute best results from Verbatim, consider the following technical
   * *A:* We've optimized the API timeouts to 60 seconds on serverless hosts. If a meeting is exceptionally long, use the Free vocal compression switch to keep files light!
 
 ---
-*Developed with excellence by the Verbatim team. © 2026. All rights reserved.*
+*Developed with excellence by the Recall.ai team. © 2026. All rights reserved.*

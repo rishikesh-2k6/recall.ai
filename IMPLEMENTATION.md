@@ -1,4 +1,4 @@
-# Verbatim — Frontend Implementation Plan
+# Recall.ai — Frontend Implementation Plan
 > AI Meeting & Lecture Note-Taker · Next.js + Tailwind + Shadcn + Supabase + Groq + NVIDIA
 
 ---
@@ -24,7 +24,7 @@
 
 ## 1. Project Overview
 
-Verbatim is a dark-themed, split-panel web app that:
+Recall.ai is a dark-themed, split-panel web app that:
 - Records audio from the user's microphone (or accepts file uploads)
 - Sends audio to a backend API route that transcribes via **Groq Whisper** and summarises via **NVIDIA Llama 3**
 - Displays a live animated waveform, TLDR, speaker-diarized transcript, action items, and AI insights
@@ -117,7 +117,7 @@ Your role is **Frontend Developer**. You own everything below `/app`, `/componen
 ### 0.1 Clone the template
 
 ```bash
-git clone https://github.com/8xsocial/template-webapp.git .
+git clone https://github.com/DhanushSai-Chalasani/Recall.ai.git .
 npm install
 ```
 
@@ -185,7 +185,7 @@ export default function RootLayout({ children }) {
 
 ### 1.1 `Sidebar.tsx`
 
-- Logo: icon + "Verbatim" in serif font
+- Logo: icon + "Recall.ai" in serif font
 - Nav items: Record, Meetings, Search, Analytics, Integrations
 - Recent meetings list (fetched from Supabase — see `useMeeting` hook)
 - User avatar + name at bottom (from Supabase auth session)
@@ -844,4 +844,4 @@ interface MeetingResult {
 
 ---
 
-*Last updated: May 2026 · Verbatim v1.0 Frontend Implementation Plan*
+*Last updated: May 2026 · Recall.ai v1.0 Frontend Implementation Plan*

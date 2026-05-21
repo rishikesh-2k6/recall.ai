@@ -1,7 +1,7 @@
-# 🛠 Verbatim AI Master Backend Blueprint
+# 🛠 Recall.ai Master Backend Blueprint
 **The Single Source of Truth for the Backend Engineer**
 
-The frontend of Verbatim is 100% complete and fully operational. By default, it runs in a "Demo Mode" that intercepts API calls and returns mockup data. Your goal is to build the actual APIs to process real audio files, host the background automated meeting bot, query the AI models, save the data to a database, and power all the advanced AI features.
+The frontend of Recall.ai is 100% complete and fully operational. By default, it runs in a "Demo Mode" that intercepts API calls and returns mockup data. Your goal is to build the actual APIs to process real audio files, host the background automated meeting bot, query the AI models, save the data to a database, and power all the advanced AI features.
 
 ---
 

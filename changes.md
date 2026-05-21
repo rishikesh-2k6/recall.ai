@@ -3,7 +3,7 @@
 Here is a summary of the recent changes made to the project:
 
 ## UI & Frontend Improvements
-- **Branding Polish:** Replaced placeholder "8x Template" branding with the "Verbatim" logo in both the navigation bar and footer.
+- **Branding Polish:** Replaced placeholder "8x Template" branding with the "Recall.ai" logo in both the navigation bar and footer.
 - **Sidebar Enhancements:**
   - Implemented a collapsible sidebar for better use of screen real estate.
   - Fixed sidebar alignment issues.
