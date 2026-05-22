@@ -76,23 +76,33 @@ Recall.ai has been rigorously audited and secured against modern web vulnerabili
       route.ts                ← Secure 25MB validation & AI analytics orchestrator
     /vault-search
       route.ts                ← Upgraded vector search endpoint with dynamic filtering
+    /bot
+      /schedule
+        route.ts              ← Active scheduler queue adding BullMQ delayed jobs
+    /export
+      /google-docs
+        route.ts              ← Google Docs batch-styled note creator & Drive exporter
+      /notion
+        route.ts              ← Notion database page integration
     /account
-      /upgrade                ← Server-side stripe/subscription validator
+      /upgrade                ← Secure subscription/tier upgrader
       /downgrade              ← Secure tier downgrade router
-  layout.tsx                  ← Global fonts, styles, and HTML metadata
-  globals.css                 ← Root CSS variables & glassmorphic tokens
+
+/bot-worker
+  /Dockerfile                 ← Containerized headless Chromium Playwright environment
+  /worker.ts                  ← Asynchronous BullMQ queue worker & browser recorder
+  /gemini-processor.ts        ← Gemini 1.5 Flash diarized transcript & Supabase persistent sync
+  /package.json               ← Standalone packages (playwright, bullmq, @google/genai)
+  /README.md                  ← Step-by-step OCI VM & Docker deployment guide
 
 /components
   /recorder
     AudioRecorder.tsx         ← Recorder coordinator & modes
     WaveformCanvas.tsx        ← Frequency waveform visualizer
-    RecordButton.tsx          ← Staggered animated trigger button
   /results
     ResultsPanel.tsx          ← Summary, Action Items, & Insights tab panel
-    TLDRCard.tsx              ← Summaries & quote cards
-    TranscriptView.tsx        ← Searchable dialogue with speaker diarization
-    ActionItemList.tsx        ← Interactive prioritized checklist
   /shared
+    ExportDropdown.tsx        ← Premium dropdown with Google Docs, Notion, & Local exporters
     ProcessingState.tsx       ← Stepped processing loader timeline
 
 /supabase
@@ -102,39 +112,20 @@ Recall.ai has been rigorously audited and secured against modern web vulnerabili
 
 ---
 
-## 🔌 API Contract: Vault Vector Search
+## ⚡ Key Technical Milestones (Newly Completed)
 
-### `POST /api/vault-search`
+### 📄 Google Docs & Notion Workspace Synchronizers
+* **Dynamic Google Docs Creation:** Implemented authenticated OAuth Drive integration in `/api/export/google-docs` using the Google APIs Client Library. Formats document content hierarchically using structural titles, subtitles, colored quote highlights, and stylized action logs in a single batch-update call.
+* **Notion Integration:** Automatically parses meeting attributes to build formatted database entries, mapping markdown paragraphs, checkbox items, and metadata onto user Notion pages.
+* **Local Fallback Mode:** Operates elegantly in local development without keys by generating high-fidelity mock export URLs.
 
-**Request Body:**
-```json
-{
-  "query": "What did we decide about the timeline?",
-  "meetingId": "Optional-meeting-UUID-to-filter-locally",
-  "dateRange": {
-    "start": "2026-05-20T00:00:00Z",
-    "end": "2026-05-21T23:59:59Z"
-  },
-  "category": "Work",
-  "matchThreshold": 0.35,
-  "matchCount": 5
-}
-```
-
-**Response Body:**
-```json
-{
-  "answer": "Based on our sync on May 21st, the team decided to push the beta deployment to next Tuesday...",
-  "sources": [
-    {
-      "id": "meeting-uuid-1",
-      "name": "Autopilot Roadmap Sync",
-      "created_at": "2026-05-21T11:45:00Z",
-      "similarity": 0.842
-    }
-  ]
-}
-```
+### 🤖 Autonomous Conference Note-Taker Bot (`bot-worker/`)
+A production-ready, highly containerized background microservice designed for infinite VM execution (bypassing the Vercel 60-second limit entirely):
+* **Asynchronous Delayed Queueing:** The schedule API pushes BullMQ jobs with millisecond delay offsets calculated from target dates into a central Redis broker.
+* **Playwright Conference Joining:** Headless Chromium instances safely enter Google Meet, Microsoft Teams, or Zoom, programmatically bypassing lobbies, muting microphones, and disabling cameras.
+* **Lossless Audio Streaming:** Injects a custom Web Audio API stream recorder inside browser pages to capture call audio in high-fidelity WAV streams.
+* **Zero-Cost Multimodal Synthesis:** Feeds raw audio recordings directly to the **Google Gemini 1.5 Flash API**, transcribing and synthesizing diarized speaker timelines and action insights in a single multimodal pass.
+* **Automatic Cloud Database Sync:** Commits synthesized results directly back to the Supabase PostgreSQL database and uploads audio files to the `meetings-audio` bucket.
 
 ---
 
@@ -143,6 +134,7 @@ Recall.ai has been rigorously audited and secured against modern web vulnerabili
 ### Prerequisites
 * [Node.js](https://nodejs.org/) v20+
 * [Supabase CLI](https://supabase.com/docs/guides/cli) & [Docker](https://www.docker.com/)
+* [Redis](https://redis.io/) (for active Autopilot queue scheduling)
 
 ### Setup Instructions
 
@@ -153,22 +145,28 @@ Recall.ai has been rigorously audited and secured against modern web vulnerabili
    npm install
    ```
 
-2. **Spin Up Local Database & Run Migrations:**
-   ```bash
-   supabase start
-   ```
-
-3. **Configure Environment Keys (`.env.local`):**
+2. **Configure Environment Keys (`.env.local`):**
    ```env
    NEXT_PUBLIC_SUPABASE_URL="http://127.0.0.1:54321"
    NEXT_PUBLIC_SUPABASE_ANON_KEY="your-supabase-anon-key"
    SUPABASE_SERVICE_ROLE_KEY="your-service-role-key"
    GROQ_API_KEY="your-groq-key-here"
    NVIDIA_API_KEY="your-nvidia-key-here"
+   REDIS_HOST="127.0.0.1"
+   REDIS_PORT="6379"
    ```
 
-4. **Launch Development Server:**
+3. **Configure and Run the Background Bot Worker:**
    ```bash
+   cd bot-worker
+   npm install
+   # Run locally:
+   npm start
+   ```
+
+4. **Launch Main Web Application Development Server:**
+   ```bash
+   cd ..
    npm run dev
    ```
    Open **[http://localhost:3000](http://localhost:3000)** in your browser, create an account, and start capturing meetings.
@@ -177,11 +175,9 @@ Recall.ai has been rigorously audited and secured against modern web vulnerabili
 
 ## 🗺 Active Roadmap Features
 
-Developers on Recall.ai are actively building these production-ready pipelines next:
-
-* **⚡ Headless Autopilot bot (`BullMQ + Redis`):** Provisioning dockerized headless browser agents that can join external video conferences autonomously via invites.
-* **📄 Google Docs Integration (`POST /api/export/google-docs`):** Developing custom exporters utilizing the official Google Auth and Google Docs APIs to generate formatted layouts from meetings.
-* **📊 Slack & Notion Webhook Pipeline:** Real-time event notifications for high-priority checklist action items.
+Recall.ai development continues:
+* **📊 Slack Webhook Action Pipeline:** Real-time event notifications for high-priority checklist action items.
+* **💼 Salesforce / HubSpot CRM Sync:** Automated meeting insight logs linked directly to customer records.
 
 ---
 
