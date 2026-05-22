@@ -1,5 +1,29 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { Queue } from "bullmq";
+
+// Initialize BullMQ queue client connection to Redis with grace fallback
+let autopilotQueue: Queue | null = null;
+try {
+  const connection = {
+    host: process.env.REDIS_HOST || "127.0.0.1",
+    port: parseInt(process.env.REDIS_PORT || "6379"),
+    password: process.env.REDIS_PASSWORD || undefined,
+  };
+  autopilotQueue = new Queue("autopilot-bots", { 
+    connection,
+    defaultJobOptions: {
+      removeOnComplete: true,
+      removeOnFail: true,
+    }
+  });
+  // BullMQ emits errors on the queue instance when connection fails; without this listener, it crashes the app
+  autopilotQueue.on("error", (err: any) => {
+    console.warn("[Autopilot Queue Background Error] Redis connection failed:", err.message);
+  });
+} catch (e: any) {
+  console.warn("[Autopilot Queue] Could not create Queue instance:", e.message);
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -46,23 +70,59 @@ export async function POST(req: NextRequest) {
       // Fallback in case migrations haven't been applied yet locally (Demo/Fallback Mode)
       if (error.code === "PGRST116" || error.message.includes("does not exist")) {
         console.warn("[Autopilot] Table 'bot_schedules' not found. Falling back to mock success.");
+        
+        const mockData = {
+          id: crypto.randomUUID(),
+          user_id: user.id,
+          meeting_link: link,
+          scheduled_at: scheduledAt,
+          bot_name: botName || "Recall Note Taker",
+          platform,
+          settings: settings || { diarize: true, actions: true, language: "en", style: "detailed" },
+          status: "scheduled",
+          created_at: new Date().toISOString()
+        };
+
+        // Attempt queue enqueue for mock success too
+        if (autopilotQueue) {
+          try {
+            const delayMs = new Date(scheduledAt).getTime() - Date.now();
+            await autopilotQueue.add("join-meeting", {
+              scheduleId: mockData.id,
+              link,
+              botName: mockData.bot_name,
+              settings: mockData.settings
+            }, { delay: Math.max(0, delayMs) });
+          } catch (qErr) {}
+        }
+
         return NextResponse.json({
           success: true,
           message: "Scheduled (Mock Fallback - Apply Migrations!)",
-          data: {
-            id: crypto.randomUUID(),
-            user_id: user.id,
-            meeting_link: link,
-            scheduled_at: scheduledAt,
-            bot_name: botName || "Recall Note Taker",
-            platform,
-            settings: settings || { diarize: true, actions: true, language: "en", style: "detailed" },
-            status: "scheduled",
-            created_at: new Date().toISOString()
-          }
+          data: mockData
         });
       }
       return NextResponse.json({ error: `Database error: ${error.message}` }, { status: 500 });
+    }
+
+    // Enqueue actual BullMQ job
+    if (autopilotQueue) {
+      try {
+        const delayMs = new Date(scheduledAt).getTime() - Date.now();
+        await autopilotQueue.add("join-meeting", {
+          scheduleId: data.id,
+          link,
+          botName: data.bot_name,
+          settings: data.settings
+        }, { 
+          delay: Math.max(0, delayMs),
+          removeOnComplete: true,
+          removeOnFail: true,
+        });
+        console.log(`[Autopilot Queue] Enqueued job for schedule ${data.id} with ${delayMs}ms delay`);
+      } catch (queueErr: any) {
+        console.error("[Autopilot Queue Error] Failed to enqueue job:", queueErr.message);
+      }
     }
 
     return NextResponse.json({

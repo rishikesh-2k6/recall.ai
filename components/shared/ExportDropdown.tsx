@@ -134,6 +134,32 @@ ${result.transcript.map(l => `**${l.speaker}** *(${formatTimestamp(l.timestamp)}
     setOpen(false)
   }
 
+  function exportToGoogleDocs() {
+    toast.promise(
+      fetch("/api/export/google-docs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          meetingId: result.id,
+          googleToken: "mock-token-from-frontend"
+        }),
+      }).then(async r => {
+        const data = await r.json()
+        if (!r.ok) throw new Error(data.error || "Failed")
+        if (data.url) {
+          window.open(data.url, "_blank")
+        }
+        return data
+      }),
+      {
+        loading: "Syncing to Google Docs...",
+        success: "Google Doc created successfully!",
+        error: (err: any) => `Failed to export: ${err.message || "Unknown error"}`,
+      }
+    )
+    setOpen(false)
+  }
+
   const ITEMS = [
     { icon: Copy, label: "Copy Summary", action: copySummary },
     { icon: FileText, label: "Copy Transcript", action: copyTranscript },
@@ -143,6 +169,7 @@ ${result.transcript.map(l => `**${l.speaker}** *(${formatTimestamp(l.timestamp)}
     { icon: FileDown, label: "Download .md", action: downloadMarkdown },
     { divider: true },
     { icon: BookHeart, label: "Send to Notion", action: exportToNotion },
+    { icon: FileText, label: "Send to Google Docs", action: exportToGoogleDocs },
   ] as const
 
   return (
