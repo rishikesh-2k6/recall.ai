@@ -10,7 +10,7 @@ export async function GET() {
 
   const { data, error } = await supabase
     .from("meetings")
-    .select("id, name, tldr, stats, speakers, action_items, insights, created_at")
+    .select("id, name, tldr, duration, speakers, action_items, insights, created_at")
     .eq("user_id", user.id)
     .order("created_at", { ascending: false })
 
@@ -23,7 +23,12 @@ export async function GET() {
     id: m.id,
     name: m.name,
     tldr: m.tldr,
-    stats: m.stats,
+    stats: {
+      duration: m.duration,
+      speakerCount: m.speakers?.length || 0,
+      wordCount: 0,
+      actionItemCount: m.action_items?.length || 0,
+    },
     speakers: m.speakers,
     actionItems: m.action_items,
     insights: m.insights,

@@ -29,6 +29,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // Get initial user
     const init = async () => {
+      // Check for local mock session first (perfect for offline Demo Mode)
+      const isMockSession = typeof document !== "undefined" && document.cookie.includes("sb-mock-session=true")
+      
+      if (isMockSession) {
+        console.log('[AuthContext] Mock session active')
+        setUser({
+          id: "mock-user-id",
+          email: "demo@recall.ai",
+          user_metadata: { name: "Demo User" },
+        } as any)
+        setIsLoading(false)
+        return
+      }
+
       try {
         console.log('[AuthContext] Initializing...')
 
@@ -84,6 +98,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const signOut = useCallback(async () => {
+    if (typeof document !== "undefined") {
+      document.cookie = "sb-mock-session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT"
+    }
     const { error } = await supabase.auth.signOut()
     if (error) {
       console.error("Sign out error:", error)

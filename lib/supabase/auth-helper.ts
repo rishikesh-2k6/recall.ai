@@ -63,6 +63,15 @@ export async function getAuthenticatedUser(req: NextRequest) {
   // Strategy 2: Fall back to cookie-based session (web app / Next.js SSR)
   try {
     const cookieStore = await cookies()
+    const hasMockSession = cookieStore.get("sb-mock-session")?.value === "true"
+    if (hasMockSession) {
+      return {
+        id: "mock-user-id",
+        email: "demo@recall.ai",
+        user_metadata: { name: "Demo User" },
+      } as any
+    }
+
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,

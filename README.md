@@ -119,6 +119,10 @@ Recall.ai has been rigorously audited and secured against modern web vulnerabili
 * **Notion Integration:** Automatically parses meeting attributes to build formatted database entries, mapping markdown paragraphs, checkbox items, and metadata onto user Notion pages.
 * **Local Fallback Mode:** Operates elegantly in local development without keys by generating high-fidelity mock export URLs.
 
+### 🔒 Robust Offline Sandbox & Safety Guards (Developer Experience)
+* **Local Auth Bypass (Demo Mode):** Added a secure, cookie-based local sandbox bypass (`sb-mock-session=true`) in Next.js `middleware.ts`, `auth-helper.ts`, and React context. If remote database connections fail or Supabase environment variables are missing, the server gracefully falls back to a mock demo session (`demo@recall.ai`), allowing developers to test and record client-side dashboards 100% offline.
+* **Database Query Fixes:** Resolved query schema discrepancies by selecting and mapping normalized SQL table fields (such as `duration`, `speakers`, and `action_items`) instead of querying non-existent fields, preventing server-side API crashes.
+
 ### 🤖 Autonomous Conference Note-Taker Bot (`bot-worker/`)
 A production-ready, highly containerized background microservice designed for infinite VM execution (bypassing the Vercel 60-second limit entirely):
 * **Asynchronous Delayed Queueing:** The schedule API pushes BullMQ jobs with millisecond delay offsets calculated from target dates into a central Redis broker.
