@@ -439,133 +439,105 @@ export function AudioRecorder() {
         {/* Autopilot Bot scheduling panel if mode === 'bot' */}
         {phase === "idle" && mode === 'bot' && (
           <div className="space-y-4 animate-fade-in">
-            {!isPro ? (
-              // Premium Lock Card
-              <div className="p-5 rounded-2xl border border-amber-500/20 bg-gradient-to-br from-amber-500/10 via-[var(--bg2)] to-purple-500/10 backdrop-blur-md relative overflow-hidden shadow-xl text-center space-y-4">
-                <div className="absolute top-0 right-0 w-[150px] h-[150px] rounded-full bg-amber-500/10 blur-[40px] pointer-events-none" />
-                <div className="inline-flex p-3 rounded-full bg-amber-500/10 text-amber-400 mb-1 animate-pulse">
-                  <Bot className="w-6 h-6" />
+            {/* Autopilot Scheduler Form */}
+            <div className="p-5 rounded-2xl border border-[var(--border)] bg-[var(--bg2)]/60 backdrop-blur-md shadow-xl space-y-4">
+              <div className="flex items-center gap-2 pb-2.5 border-b border-[var(--border)]">
+                <Bot className="w-4 h-4 text-[var(--accent)]" />
+                <div>
+                  <h3 className="text-xs font-bold text-[var(--text)] uppercase tracking-wider">Bot Autopilot Scheduler</h3>
+                  <p className="text-[10px] text-[var(--text3)]">Schedule a bot to join and record on your behalf</p>
                 </div>
-                <h4 className="text-sm font-bold text-amber-400 tracking-wider uppercase">Recall Autopilot (Pro Feature)</h4>
-                <p className="text-xs text-[var(--text2)] leading-relaxed font-sans">
-                  Let Recall.ai attend your meetings for you! Submit any Google Meet, Zoom, or Teams link, and our smart AI bot will log in at the scheduled time, listen, and deliver structured notes directly to your dashboard.
-                </p>
-                <button
-                  onClick={async () => {
-                    try {
-                      await upgradeToPro();
-                      toast.success("Welcome to Pro!", { description: "You have unlocked all premium autopilot features!" });
-                    } catch (e) {
-                      toast.error("Failed to upgrade");
-                    }
-                  }}
-                  className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-bold text-xs tracking-wider uppercase transition-all shadow-md cursor-pointer flex items-center justify-center gap-2"
-                >
-                  <Star className="w-3.5 h-3.5 fill-white text-white animate-spin-slow" />
-                  Upgrade to Pro
-                </button>
               </div>
-            ) : (
-              // Autopilot Scheduler Form for Pro Users
-              <div className="p-5 rounded-2xl border border-[var(--border)] bg-[var(--bg2)]/60 backdrop-blur-md shadow-xl space-y-4">
-                <div className="flex items-center gap-2 pb-2.5 border-b border-[var(--border)]">
-                  <Bot className="w-4 h-4 text-[var(--accent)]" />
-                  <div>
-                    <h3 className="text-xs font-bold text-[var(--text)] uppercase tracking-wider">Bot Autopilot Scheduler</h3>
-                    <p className="text-[10px] text-[var(--text3)]">Schedule a bot to join and record on your behalf</p>
-                  </div>
-                </div>
 
-                <div className="space-y-3">
-                  {/* Meeting Link input */}
-                  <div className="space-y-1">
-                    <label className="text-[9px] font-bold uppercase tracking-wider text-[var(--text3)]">
-                      Meeting Link (Google Meet, Zoom, Teams)
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="https://meet.google.com/abc-defg-hij"
-                      value={botLink}
-                      onChange={(e) => {
-                        setBotLink(e.target.value);
-                        if (e.target.value.includes("meet.google.com")) {
-                          setDetectedPlatform("google-meet");
-                        } else if (e.target.value.includes("zoom.us")) {
-                          setDetectedPlatform("zoom");
-                        } else if (e.target.value.includes("teams.microsoft")) {
-                          setDetectedPlatform("teams");
-                        } else {
-                          setDetectedPlatform(null);
-                        }
-                      }}
-                      className="w-full px-3 py-2 rounded-xl bg-[var(--bg)] border border-[var(--border)] text-xs text-[var(--text)] outline-none focus:border-[var(--accent)]/50 font-medium placeholder:text-[var(--text3)]"
-                    />
-                    
-                    {detectedPlatform && (
-                      <div className="flex items-center gap-1.5 pt-1">
-                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-semibold border ${
-                          detectedPlatform === "google-meet" 
-                            ? "bg-green-500/10 text-green-400 border-green-500/20" 
-                            : detectedPlatform === "zoom"
-                            ? "bg-blue-500/10 text-blue-400 border-blue-500/20"
-                            : "bg-indigo-500/10 text-indigo-400 border-indigo-500/20"
-                        }`}>
-                          <span className="w-1 h-1 rounded-full bg-current" />
-                          {detectedPlatform === "google-meet" ? "Google Meet Detected" : detectedPlatform === "zoom" ? "Zoom Detected" : "MS Teams Detected"}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Scheduled Time input */}
-                  <div className="space-y-1">
-                    <label className="text-[9px] font-bold uppercase tracking-wider text-[var(--text3)]">
-                      Start Date & Time
-                    </label>
-                    <div className="relative">
-                      <input
-                        type="datetime-local"
-                        value={botTime}
-                        onChange={(e) => setBotTime(e.target.value)}
-                        className="w-full px-3 py-2 rounded-xl bg-[var(--bg)] border border-[var(--border)] text-xs text-[var(--text)] outline-none focus:border-[var(--accent)]/50 font-medium font-sans"
-                      />
+              <div className="space-y-3">
+                {/* Meeting Link input */}
+                <div className="space-y-1">
+                  <label className="text-[9px] font-bold uppercase tracking-wider text-[var(--text3)]">
+                    Meeting Link (Google Meet, Zoom, Teams)
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="https://meet.google.com/abc-defg-hij"
+                    value={botLink}
+                    onChange={(e) => {
+                      setBotLink(e.target.value);
+                      if (e.target.value.includes("meet.google.com")) {
+                        setDetectedPlatform("google-meet");
+                      } else if (e.target.value.includes("zoom.us")) {
+                        setDetectedPlatform("zoom");
+                      } else if (e.target.value.includes("teams.microsoft")) {
+                        setDetectedPlatform("teams");
+                      } else {
+                        setDetectedPlatform(null);
+                      }
+                    }}
+                    className="w-full px-3 py-2 rounded-xl bg-[var(--bg)] border border-[var(--border)] text-xs text-[var(--text)] outline-none focus:border-[var(--accent)]/50 font-medium placeholder:text-[var(--text3)]"
+                  />
+                  
+                  {detectedPlatform && (
+                    <div className="flex items-center gap-1.5 pt-1">
+                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-semibold border ${
+                        detectedPlatform === "google-meet" 
+                          ? "bg-green-500/10 text-green-400 border-green-500/20" 
+                          : detectedPlatform === "zoom"
+                          ? "bg-blue-500/10 text-blue-400 border-blue-500/20"
+                          : "bg-indigo-500/10 text-indigo-400 border-indigo-500/20"
+                      }`}>
+                        <span className="w-1.5 h-1.5 rounded-full bg-current" />
+                        {detectedPlatform === "google-meet" ? "Google Meet Detected" : detectedPlatform === "zoom" ? "Zoom Detected" : "MS Teams Detected"}
+                      </span>
                     </div>
-                  </div>
+                  )}
+                </div>
 
-                  {/* Bot Custom Name input */}
-                  <div className="space-y-1">
-                    <label className="text-[9px] font-bold uppercase tracking-wider text-[var(--text3)]">
-                      Bot Display Name
-                    </label>
+                {/* Scheduled Time input */}
+                <div className="space-y-1">
+                  <label className="text-[9px] font-bold uppercase tracking-wider text-[var(--text3)]">
+                    Start Date & Time
+                  </label>
+                  <div className="relative">
                     <input
-                      type="text"
-                      placeholder="e.g. Recall Note Taker"
-                      value={botName}
-                      onChange={(e) => setBotName(e.target.value)}
-                      className="w-full px-3 py-2 rounded-xl bg-[var(--bg)] border border-[var(--border)] text-xs text-[var(--text)] outline-none focus:border-[var(--accent)]/50 font-medium placeholder:text-[var(--text3)]"
+                      type="datetime-local"
+                      value={botTime}
+                      onChange={(e) => setBotTime(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl bg-[var(--bg)] border border-[var(--border)] text-xs text-[var(--text)] outline-none focus:border-[var(--accent)]/50 font-medium font-sans"
                     />
                   </div>
                 </div>
 
-                <button
-                  onClick={handleScheduleBot}
-                  disabled={isScheduling || !botLink || !botTime}
-                  className="w-full mt-2 py-3 px-4 rounded-xl bg-gradient-to-r from-[var(--accent)] to-[var(--accent2)] hover:opacity-95 text-white text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-lg shadow-[var(--accent)]/15 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isScheduling ? (
-                    <>
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      Scheduling...
-                    </>
-                  ) : (
-                    <>
-                      <Calendar className="w-3.5 h-3.5" />
-                      Schedule Autopilot
-                    </>
-                  )}
-                </button>
+                {/* Bot Custom Name input */}
+                <div className="space-y-1">
+                  <label className="text-[9px] font-bold uppercase tracking-wider text-[var(--text3)]">
+                    Bot Display Name
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Recall Note Taker"
+                    value={botName}
+                    onChange={(e) => setBotName(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl bg-[var(--bg)] border border-[var(--border)] text-xs text-[var(--text)] outline-none focus:border-[var(--accent)]/50 font-medium placeholder:text-[var(--text3)]"
+                  />
+                </div>
               </div>
-            )}
+
+              <button
+                onClick={handleScheduleBot}
+                disabled={isScheduling || !botLink || !botTime}
+                className="w-full mt-2 py-3 px-4 rounded-xl bg-gradient-to-r from-[var(--accent)] to-[var(--accent2)] hover:opacity-95 text-white text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-lg shadow-[var(--accent)]/15 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isScheduling ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    Scheduling...
+                  </>
+                ) : (
+                  <>
+                    <Calendar className="w-3.5 h-3.5" />
+                    Schedule Autopilot
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         )}
 

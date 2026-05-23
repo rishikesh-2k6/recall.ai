@@ -46,20 +46,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // --- PRO-ONLY TIER GATE (Fix #2) ---
     const adminClient = createAdminClient();
-    const { data: sub } = await adminClient
-      .from("subscriptions")
-      .select("tier")
-      .eq("user_id", user.id)
-      .single();
-
-    if (!sub || sub.tier !== "pro") {
-      return NextResponse.json(
-        { error: "Autopilot bot scheduling requires a Pro subscription." },
-        { status: 402 }
-      );
-    }
 
     const { link, scheduledAt, botName, settings } = await req.json();
 
