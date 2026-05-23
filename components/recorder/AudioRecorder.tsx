@@ -15,6 +15,7 @@ import { useMeetingContext } from "@/contexts/meeting-context"
 import { useProcessAudio } from "@/hooks/useProcessAudio"
 import { useSubscription } from "@/contexts/subscription-context"
 import { WaveformCanvas } from "./WaveformCanvas"
+import { extractAndDownsampleAudio } from "@/lib/audio-utils"
 import type { RecorderSettings as SettingsType, RecorderMode } from "@/lib/types"
 
 export function AudioRecorder() {
@@ -34,6 +35,7 @@ export function AudioRecorder() {
     style: "detailed",
   })
   const [uploadedFile, setUploadedFile] = useState<File | null>(null)
+  const [isOptimizing, setIsOptimizing] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Autopilot Bot scheduling states
@@ -142,17 +144,68 @@ export function AudioRecorder() {
     }
   }
 
-  function handleFileSelect(file: File) {
-    const MAX_FILE_SIZE = 25 * 1024 * 1024; // 25MB boundary limit
-    if (file.size > MAX_FILE_SIZE) {
+  async function handleFileSelect(file: File) {
+    // Allow raw file uploads up to 250MB for in-browser extraction and compression
+    const MAX_UPLOAD_SIZE = 250 * 1024 * 1024; 
+    if (file.size > MAX_UPLOAD_SIZE) {
       toast.error("File too large", { 
-        description: `Maximum size allowed is 25MB. This file is ${(file.size / 1024 / 1024).toFixed(1)}MB.` 
+        description: `Maximum raw file size allowed is 250MB. This file is ${(file.size / 1024 / 1024).toFixed(1)}MB.` 
       });
       return;
     }
-    setUploadedFile(file)
-    setPhase("stopped")
-    toast.success("File uploaded", { description: file.name })
+
+    setIsOptimizing(true);
+    const toastId = toast.loading("Optimizing media...", {
+      description: "Extracting audio track and compressing to high-efficiency vocal stream..."
+    });
+
+    try {
+      const optimizedBlob = await extractAndDownsampleAudio(file);
+      
+      // Convert to a File object with proper name & type
+      const originalNameWithoutExt = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
+      const optimizedFile = new File([optimizedBlob], `${originalNameWithoutExt}_optimized.wav`, {
+        type: "audio/wav",
+        lastModified: Date.now()
+      });
+
+      // Verify optimized size is within Groq's 25MB boundary
+      const MAX_WHISPER_SIZE = 25 * 1024 * 1024;
+      if (optimizedFile.size > MAX_WHISPER_SIZE) {
+        toast.dismiss(toastId);
+        toast.error("Extracted audio is too large", {
+          description: `Even after optimization, the extracted audio is ${(optimizedFile.size / 1024 / 1024).toFixed(1)}MB (max 25MB allowed).`
+        });
+        setIsOptimizing(false);
+        return;
+      }
+
+      setUploadedFile(optimizedFile);
+      setPhase("stopped");
+      toast.dismiss(toastId);
+      toast.success("Media optimized successfully!", {
+        description: `Extracted mono WAV: ${(optimizedFile.size / 1024 / 1024).toFixed(1)}MB (Original: ${(file.size / 1024 / 1024).toFixed(1)}MB)`
+      });
+    } catch (err: any) {
+      console.error("Audio optimization failed, attempting fallback:", err);
+      toast.dismiss(toastId);
+      
+      // Fallback: If it's already an audio file and under 25MB, accept it directly
+      const isAudio = file.type.startsWith("audio/") || /\.(mp3|wav|m4a|webm|ogg|aac)$/i.test(file.name);
+      if (isAudio && file.size <= 25 * 1024 * 1024) {
+        setUploadedFile(file);
+        setPhase("stopped");
+        toast.warning("Audio loaded with fallback", {
+          description: "Could not optimize in browser, but loaded the original audio file."
+        });
+      } else {
+        toast.error("Media optimization failed", {
+          description: err.message || "Ensure the file format is supported and not corrupted."
+        });
+      }
+    } finally {
+      setIsOptimizing(false);
+    }
   }
 
   const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -353,16 +406,24 @@ export function AudioRecorder() {
 
         {/* File Drag and Drop Zone if mode === 'upload' */}
         {phase === "idle" && mode === 'upload' && (
-          <div
-            onClick={() => fileInputRef.current?.click()}
-            onDragOver={handleDragOver}
-            onDrop={handleDrop}
-            className="border-2 border-dashed border-[var(--border2)] rounded-2xl p-6 text-center cursor-pointer hover:border-[var(--accent2)]/40 hover:bg-[var(--accent2)]/5 transition-all animate-fade-in"
-          >
-            <Upload className="w-8 h-8 mx-auto mb-2 text-[var(--accent2)] animate-pulse" />
-            <p className="text-sm font-semibold text-[var(--text)]">Click or Drag & Drop File</p>
-            <p className="text-xs text-[var(--text3)] mt-1">Accepts MP3, WAV, M4A, WEBM, MP4</p>
-          </div>
+          isOptimizing ? (
+            <div className="border-2 border-dashed border-[var(--accent2)]/40 rounded-2xl p-6 text-center bg-[var(--accent2)]/5 transition-all animate-pulse">
+              <Loader2 className="w-8 h-8 mx-auto mb-2 text-[var(--accent2)] animate-spin" />
+              <p className="text-sm font-semibold text-white">Optimizing media file...</p>
+              <p className="text-xs text-[var(--text3)] mt-1">Extracting vocal track and downsampling to 16kHz mono WAV...</p>
+            </div>
+          ) : (
+            <div
+              onClick={() => fileInputRef.current?.click()}
+              onDragOver={handleDragOver}
+              onDrop={handleDrop}
+              className="border-2 border-dashed border-[var(--border2)] rounded-2xl p-6 text-center cursor-pointer hover:border-[var(--accent2)]/40 hover:bg-[var(--accent2)]/5 transition-all animate-fade-in"
+            >
+              <Upload className="w-8 h-8 mx-auto mb-2 text-[var(--accent2)] animate-pulse" />
+              <p className="text-sm font-semibold text-[var(--text)]">Click or Drag & Drop File</p>
+              <p className="text-xs text-[var(--text3)] mt-1">Accepts MP3, WAV, M4A, WEBM, MP4</p>
+            </div>
+          )
         )}
 
         {/* System Audio Warning Badge */}
