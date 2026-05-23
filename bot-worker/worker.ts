@@ -68,12 +68,46 @@ const worker = new Worker(
           "--allow-file-access-from-files",
           "--disable-gesture-requirement-for-media-playback",
           "--autoplay-policy=no-user-gesture-required",
+          "--auto-select-desktop-capture-source=Entire screen",
+          "--auto-select-tab-capture-source-by-title=Google Meet",
+          "--enable-usermedia-screen-capturing",
         ],
       });
 
       context = await browser.newContext({
         permissions: ["microphone"], // Allow mic access in context
       });
+
+      // Inject PeerConnection monkey patch BEFORE page loads to intercept WebRTC streams
+      await context.addInitScript(() => {
+        const connectedStreams = new Set();
+        (window as any).incomingMeetingStreams = [];
+        (window as any).onIncomingStreamCallback = null;
+
+        const originalConstructor = window.RTCPeerConnection;
+        window.RTCPeerConnection = function(...args) {
+          const pc = new originalConstructor(...args);
+          pc.addEventListener("track", (e: any) => {
+            let stream = e.streams && e.streams[0];
+            if (!stream && e.track) {
+              stream = new MediaStream([e.track]);
+            }
+            if (stream) {
+              if (!connectedStreams.has(stream)) {
+                connectedStreams.add(stream);
+                (window as any).incomingMeetingStreams.push(stream);
+                console.log("[Playwright Init] Captured incoming WebRTC stream track:", stream.id);
+                if (typeof (window as any).onIncomingStreamCallback === "function") {
+                  (window as any).onIncomingStreamCallback(stream);
+                }
+              }
+            }
+          });
+          return pc;
+        } as any;
+        window.RTCPeerConnection.prototype = originalConstructor.prototype;
+      });
+
       page = await context.newPage();
 
       console.log(`[Job ${job.id}] Navigating to meeting link: ${link}`);
@@ -214,27 +248,79 @@ const worker = new Worker(
         // Expose recording capture function
         (window as any).startCapturingAudio = async () => {
           try {
-            // FIX #4: Try to capture TAB AUDIO via getDisplayMedia first.
-            // This captures what other participants are saying (the actual call audio),
-            // rather than the fake simulated microphone which records silence.
-            let stream: MediaStream;
-            try {
-              // Attempt tab audio capture (requires --auto-select-tab-capture-source-by-title Chromium flag)
-              stream = await navigator.mediaDevices.getDisplayMedia({
-                audio: true,
-                video: false,
-              } as any);
-              console.log("[Playwright Bot] Successfully captured tab audio via getDisplayMedia.");
-            } catch (displayErr) {
-              // Fallback: getUserMedia (will record mic input, which is the fake device stream)
-              console.warn("[Playwright Bot] getDisplayMedia failed, falling back to getUserMedia:", displayErr);
-              stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+            // FIX #4: Capture direct digital audio from incoming WebRTC streams, with tab/mic fallback
+            const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+            if (audioContext.state === "suspended") {
+              await audioContext.resume();
             }
 
-            const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-            const source = audioContext.createMediaStreamSource(stream);
             const destination = audioContext.createMediaStreamDestination();
-            source.connect(destination);
+
+            // Create a silent dummy node to ensure the destination stream always has at least one active track.
+            // This prevents MediaRecorder from throwing "NotSupportedError" if no streams are active yet.
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            gainNode.gain.value = 0; // completely silent
+            oscillator.connect(gainNode);
+            gainNode.connect(destination);
+            oscillator.start();
+
+            // Promise with timeout wrapper to prevent getDisplayMedia/getUserMedia from blocking indefinitely in headless mode
+            const withTimeout = (promise: Promise<any>, ms: number, name: string) => {
+              let id: any;
+              const timeout = new Promise((_, reject) => {
+                id = setTimeout(() => {
+                  reject(new Error(name + " timed out after " + ms + "ms"));
+                }, ms);
+              });
+              return Promise.race([promise, timeout]).finally(() => clearTimeout(id));
+            };
+
+            function connectStream(stream: MediaStream) {
+              const audioTracks = stream.getAudioTracks();
+              if (audioTracks.length > 0) {
+                try {
+                  const source = audioContext.createMediaStreamSource(stream);
+                  source.connect(destination);
+                  console.log("[Playwright Bot] Connected WebRTC audio stream track:", stream.id);
+                } catch (err: any) {
+                  console.warn("[Playwright Bot] Failed to connect WebRTC stream track:", err.message);
+                }
+              }
+            }
+
+            // Connect pre-existing WebRTC incoming streams
+            if (Array.isArray((window as any).incomingMeetingStreams)) {
+              (window as any).incomingMeetingStreams.forEach(connectStream);
+            }
+
+            // Connect new WebRTC incoming streams dynamically
+            (window as any).onIncomingStreamCallback = connectStream;
+
+            // Fallback 1: Try getDisplayMedia (tab audio capture) with a strict 3-second timeout
+            try {
+              const displayPromise = navigator.mediaDevices.getDisplayMedia({
+                audio: true,
+                video: false,
+              });
+              const displayStream = await withTimeout(displayPromise, 3000, "getDisplayMedia");
+              const source = audioContext.createMediaStreamSource(displayStream);
+              source.connect(destination);
+              console.log("[Playwright Bot] Connected tab audio stream fallback via getDisplayMedia.");
+            } catch (displayErr: any) {
+              console.warn("[Playwright Bot] getDisplayMedia fallback failed or timed out:", displayErr.message);
+              
+              // Fallback 2: Try getUserMedia (mic audio capture) with a strict 3-second timeout
+              try {
+                const userPromise = navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+                const userStream = await withTimeout(userPromise, 3000, "getUserMedia");
+                const source = audioContext.createMediaStreamSource(userStream);
+                source.connect(destination);
+                console.log("[Playwright Bot] Connected user audio stream fallback via getUserMedia.");
+              } catch (userErr: any) {
+                console.warn("[Playwright Bot] getUserMedia fallback failed or timed out:", userErr.message);
+              }
+            }
 
             // FIX #5: Use consistent MIME type throughout — record as webm, save as webm
             const mediaRecorder = new MediaRecorder(destination.stream, { mimeType: "audio/webm;codecs=opus" });
