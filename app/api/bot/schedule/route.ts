@@ -100,7 +100,12 @@ export async function POST(req: NextRequest) {
     if (error) {
       console.error("[Autopilot API Supabase Error]:", error.message);
       // Fallback in case migrations haven't been applied yet locally (Demo/Fallback Mode)
-      if (error.code === "PGRST116" || error.message.includes("does not exist")) {
+      if (
+        error.code === "PGRST116" || 
+        error.message.includes("does not exist") || 
+        error.message.includes("schema cache") || 
+        error.message.includes("Could not find the table")
+      ) {
         console.warn("[Autopilot] Table 'bot_schedules' not found. Falling back to mock success.");
         
         const mockData = {
