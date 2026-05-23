@@ -28,6 +28,15 @@ try {
   console.warn("[Autopilot Queue] Could not create Queue instance:", e.message);
 }
 
+// Helper to add job with a strict timeout to avoid blocking execution if Redis is offline
+const addJobWithTimeout = async (queue: Queue, name: string, data: any, opts: any) => {
+  const enqueuePromise = queue.add(name, data, opts);
+  const timeoutPromise = new Promise((_, reject) => 
+    setTimeout(() => reject(new Error("Redis Queue connection timed out (Redis may be offline)")), 1500)
+  );
+  return Promise.race([enqueuePromise, timeoutPromise]);
+};
+
 export async function POST(req: NextRequest) {
   try {
     // --- AUTH (supports both cookie sessions and Bearer tokens for mobile) ---
@@ -120,17 +129,19 @@ export async function POST(req: NextRequest) {
           created_at: new Date().toISOString()
         };
 
-        // Attempt queue enqueue for mock success too
+        // Attempt queue enqueue for mock success too with strict timeout
         if (autopilotQueue) {
           try {
             const delayMs = new Date(scheduledAt).getTime() - Date.now();
-            await autopilotQueue.add("join-meeting", {
+            await addJobWithTimeout(autopilotQueue, "join-meeting", {
               scheduleId: mockData.id,
               link,
               botName: mockData.bot_name,
               settings: mockData.settings
             }, { delay: Math.max(0, delayMs) });
-          } catch (qErr) {}
+          } catch (qErr: any) {
+            console.warn("[Autopilot Fallback Queue Warning] Failed to enqueue fallback job:", qErr.message);
+          }
         }
 
         return NextResponse.json({
@@ -142,11 +153,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: `Database error: ${error.message}` }, { status: 500 });
     }
 
-    // Enqueue actual BullMQ job
+    // Enqueue actual BullMQ job with strict timeout
     if (autopilotQueue) {
       try {
         const delayMs = new Date(scheduledAt).getTime() - Date.now();
-        await autopilotQueue.add("join-meeting", {
+        await addJobWithTimeout(autopilotQueue, "join-meeting", {
           scheduleId: data.id,
           link,
           botName: data.bot_name,
