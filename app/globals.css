@@ -3,7 +3,7 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  /* ─── Verbatim Design Tokens ─────────────────────────────────── */
+  /* ─── Recall.ai Design Tokens ─────────────────────────────────── */
   --bg:           #0a0a0f;
   --bg2:          #111118;
   --bg3:          #1a1a24;
@@ -20,7 +20,7 @@
   --text2:        #8e8ca0;
   --text3:        #5c5a70;
 
-  /* ─── Shadcn Theme Tokens (mapped to Verbatim palette) ──────── */
+  /* ─── Shadcn Theme Tokens (mapped to Recall.ai palette) ──────── */
   --background: #0a0a0f;
   --foreground: #e8e6f0;
   --card: #13131d;

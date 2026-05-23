@@ -1,7 +1,7 @@
 {
   "name": "recall-bot-worker",
   "version": "1.0.0",
-  "description": "Standalone background worker for Verbatim/Recall Autopilot bot joining and processing",
+  "description": "Standalone background worker for Recall.ai Autopilot bot joining and processing",
   "main": "worker.ts",
   "scripts": {
     "start": "ts-node worker.ts",

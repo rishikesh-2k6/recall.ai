@@ -1,4 +1,4 @@
-// ─── Verbatim Utility Helpers ────────────────────────────────────────────────
+// ─── Recall.ai Utility Helpers ────────────────────────────────────────────────
 
 import { type ClassValue, clsx } from "clsx"
 import { twMerge } from "tailwind-merge"

@@ -1,4 +1,4 @@
-// ─── Verbatim Type Definitions ───────────────────────────────────────────────
+// ─── Recall.ai Type Definitions ───────────────────────────────────────────────
 
 export type Phase = 'idle' | 'recording' | 'stopped' | 'processing' | 'complete'
 
