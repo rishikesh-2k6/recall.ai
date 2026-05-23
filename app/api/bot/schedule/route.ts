@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { getAuthenticatedUser } from "@/lib/supabase/auth-helper";
+import { rateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 import { Queue } from "bullmq";
 
 // Initialize BullMQ queue client connection to Redis with grace fallback
@@ -27,17 +30,59 @@ try {
 
 export async function POST(req: NextRequest) {
   try {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    // --- AUTH (supports both cookie sessions and Bearer tokens for mobile) ---
+    const user = await getAuthenticatedUser(req);
 
     if (!user) {
       return NextResponse.json({ error: "Unauthorized. Please log in to schedule." }, { status: 401 });
+    }
+
+    // --- RATE LIMITING (Fix #8) ---
+    const rateLimitResult = rateLimit(user.id, RATE_LIMITS.BOT_SCHEDULE);
+    if (!rateLimitResult.allowed) {
+      return NextResponse.json(
+        { error: "Rate limit exceeded. Please wait before scheduling again.", retryAfterMs: rateLimitResult.retryAfterMs },
+        { status: 429 }
+      );
+    }
+
+    // --- PRO-ONLY TIER GATE (Fix #2) ---
+    const adminClient = createAdminClient();
+    const { data: sub } = await adminClient
+      .from("subscriptions")
+      .select("tier")
+      .eq("user_id", user.id)
+      .single();
+
+    if (!sub || sub.tier !== "pro") {
+      return NextResponse.json(
+        { error: "Autopilot bot scheduling requires a Pro subscription." },
+        { status: 402 }
+      );
     }
 
     const { link, scheduledAt, botName, settings } = await req.json();
 
     if (!link || !scheduledAt) {
       return NextResponse.json({ error: "Missing required fields: link or scheduledAt" }, { status: 400 });
+    }
+
+    // --- SSRF PROTECTION (Fix #3) ---
+    const allowedDomains = ["meet.google.com", "zoom.us", "teams.microsoft.com", "teams.live.com"];
+    try {
+      const parsedUrl = new URL(link);
+      if (parsedUrl.protocol !== "https:") {
+        return NextResponse.json({ error: "Only HTTPS meeting links are allowed." }, { status: 400 });
+      }
+      const domainMatch = allowedDomains.some((domain) => parsedUrl.hostname.endsWith(domain));
+      if (!domainMatch) {
+        return NextResponse.json(
+          { error: "Invalid meeting link. Only Google Meet, Zoom, and MS Teams links are supported." },
+          { status: 400 }
+        );
+      }
+    } catch {
+      return NextResponse.json({ error: "Invalid URL format." }, { status: 400 });
     }
 
     // Platform detector logic
@@ -51,7 +96,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Insert the scheduling record into the `bot_schedules` table
-    const { data, error } = await supabase
+    const { data, error } = await adminClient
       .from("bot_schedules")
       .insert({
         user_id: user.id,

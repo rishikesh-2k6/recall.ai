@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createAdminClient } from "@/lib/supabase/admin"
-import { createClient } from "@/lib/supabase/server"
+import { getAuthenticatedUser } from "@/lib/supabase/auth-helper"
+import { rateLimit, RATE_LIMITS } from "@/lib/rate-limit"
 import { HfInference } from "@huggingface/inference"
 import OpenAI from "openai"
 import { z } from "zod"
@@ -15,9 +16,18 @@ const SearchPayloadSchema = z.object({
 
 export async function POST(req: NextRequest) {
   try {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    // --- AUTH (supports both cookie sessions and Bearer tokens for mobile) ---
+    const user = await getAuthenticatedUser(req)
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+
+    // --- RATE LIMITING (Fix #8) ---
+    const rateLimitResult = rateLimit(user.id, RATE_LIMITS.VAULT_SEARCH)
+    if (!rateLimitResult.allowed) {
+      return NextResponse.json(
+        { error: "Rate limit exceeded. Please wait before searching again.", retryAfterMs: rateLimitResult.retryAfterMs },
+        { status: 429 }
+      )
+    }
 
     const body = await req.json().catch(() => ({}))
     const parsed = SearchPayloadSchema.safeParse(body)

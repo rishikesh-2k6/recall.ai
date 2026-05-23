@@ -1,14 +1,24 @@
 import { NextRequest, NextResponse } from "next/server"
-import { createClient } from "@/lib/supabase/server"
 import { createAdminClient } from "@/lib/supabase/admin"
+import { getAuthenticatedUser } from "@/lib/supabase/auth-helper"
+import { rateLimit, RATE_LIMITS } from "@/lib/rate-limit"
 import { google } from "googleapis"
 
 export async function POST(req: NextRequest) {
   try {
-    const supabase = await createClient()
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-    if (authError || !user) {
+    // --- AUTH (supports both cookie sessions and Bearer tokens for mobile) ---
+    const user = await getAuthenticatedUser(req)
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized. Please log in first." }, { status: 401 })
+    }
+
+    // --- RATE LIMITING (Fix #8) ---
+    const rateLimitResult = rateLimit(user.id, RATE_LIMITS.EXPORT)
+    if (!rateLimitResult.allowed) {
+      return NextResponse.json(
+        { error: "Rate limit exceeded. Please wait before exporting again.", retryAfterMs: rateLimitResult.retryAfterMs },
+        { status: 429 }
+      )
     }
 
     const { meetingId, googleToken } = await req.json()
@@ -30,19 +40,52 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Meeting not found or access denied." }, { status: 404 })
     }
 
-    // Initialize Google API client using the access token provided by the client
-    const oauth2Client = new google.auth.OAuth2()
-    
-    // Check if googleToken is present, otherwise use a simulated test/fallback flow
-    if (!googleToken) {
-      console.warn("[Google Docs Export] No googleToken provided. Simulating successful export for local dev/testing.")
+    // --- OAUTH TOKEN STRATEGY (Fix #7) ---
+    // Priority 1: Fetch stored server-side token from user_integrations table
+    // Priority 2: Fall back to client-provided token (legacy web flow, will be deprecated)
+    // Priority 3: Return demo/mock response for development
+    let accessToken: string | null = null
+
+    // Try server-side stored token first (secure, recommended for mobile)
+    const { data: integration } = await admin
+      .from("user_integrations")
+      .select("access_token, refresh_token, expires_at")
+      .eq("user_id", user.id)
+      .eq("provider", "google")
+      .single()
+
+    if (integration?.access_token) {
+      // Check if token is expired
+      if (integration.expires_at && new Date(integration.expires_at) < new Date()) {
+        // Token expired — if we have a refresh token, the client should re-authenticate
+        // For now, fall through to client-provided token or demo mode
+        console.warn("[Google Docs Export] Stored token expired. Falling back.")
+      } else {
+        accessToken = integration.access_token
+      }
+    }
+
+    // Fall back to client-provided token (legacy flow — log a deprecation warning)
+    if (!accessToken && googleToken) {
+      console.warn(
+        "[Google Docs Export] WARNING: Using client-provided OAuth token. " +
+        "This is insecure and will be deprecated. Migrate to server-side token storage."
+      )
+      accessToken = googleToken
+    }
+
+    // No token available — return demo mode response
+    if (!accessToken) {
+      console.warn("[Google Docs Export] No Google token available. Returning demo mode response.")
       return NextResponse.json({ 
         url: `https://docs.google.com/document/d/mock-document-${meetingId}/edit`,
-        message: "Google Docs created in Demo mode (To export to real Drive, authenticate with Google)."
+        message: "Google Docs created in Demo mode (To export to real Drive, link your Google account in Settings)."
       })
     }
 
-    oauth2Client.setCredentials({ access_token: googleToken })
+    // Initialize Google API client with the resolved token
+    const oauth2Client = new google.auth.OAuth2()
+    oauth2Client.setCredentials({ access_token: accessToken })
     const docs = google.docs({ version: "v1", auth: oauth2Client })
 
     // 1. Create a blank Google Document

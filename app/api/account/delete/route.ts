@@ -1,6 +1,8 @@
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { createAdminClient } from "@/lib/supabase/admin"
+import { getAuthenticatedUser } from "@/lib/supabase/auth-helper"
+import { rateLimit, RATE_LIMITS } from "@/lib/rate-limit"
 // Stripe import disabled until Stripe is configured
 // import { stripe } from "@/lib/stripe"
 const stripe = {
@@ -12,17 +14,25 @@ const stripe = {
   }
 } as any;
 
-export async function POST() {
+export async function POST(req: NextRequest) {
   try {
-    // 1. Authenticate the request - verify the user
-    const supabase = await createClient()
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    // --- AUTH (supports both cookie sessions and Bearer tokens for mobile) ---
+    const user = await getAuthenticatedUser(req)
 
-    if (authError || !user) {
-      console.error("[Delete Account] Authentication failed:", authError)
+    if (!user) {
+      console.error("[Delete Account] Authentication failed")
       return NextResponse.json(
         { error: "Unauthorized" },
         { status: 401 }
+      )
+    }
+
+    // --- RATE LIMITING ---
+    const rateLimitResult = rateLimit(user.id, RATE_LIMITS.ACCOUNT)
+    if (!rateLimitResult.allowed) {
+      return NextResponse.json(
+        { error: "Rate limit exceeded. Please wait.", retryAfterMs: rateLimitResult.retryAfterMs },
+        { status: 429 }
       )
     }
 
@@ -30,7 +40,8 @@ export async function POST() {
     console.log(`[Delete Account] Starting deletion for user: ${userId}`)
 
     // 2. Get user's subscription to find Stripe customer ID
-    const { data: subscription } = await supabase
+    const adminClient = createAdminClient()
+    const { data: subscription } = await adminClient
       .from("subscriptions")
       .select("stripe_customer_id")
       .eq("user_id", userId)
@@ -52,7 +63,6 @@ export async function POST() {
 
     // 4. Delete Supabase auth user (triggers CASCADE DELETE on all related tables)
     // This requires admin privileges (service role key)
-    const adminClient = createAdminClient()
 
     try {
       const { error: deleteError } = await adminClient.auth.admin.deleteUser(userId)
@@ -74,8 +84,13 @@ export async function POST() {
       )
     }
 
-    // 5. Sign out the user (clear cookies)
-    await supabase.auth.signOut()
+    // 5. Sign out the user (clear cookies — only relevant for web, mobile handles its own session)
+    try {
+      const supabaseSession = await createClient()
+      await supabaseSession.auth.signOut()
+    } catch {
+      // Sign-out failure is non-critical since the user account is already deleted
+    }
 
     return NextResponse.json({
       success: true,

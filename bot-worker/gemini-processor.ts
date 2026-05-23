@@ -58,9 +58,11 @@ export async function processMeetingAudio(audioFilePath: string, scheduleId: str
 
     // 1. Upload the raw audio recording to Gemini File API
     console.log("[Gemini Processor] Uploading audio recording to Gemini File API...");
+    // FIX #5: Use correct MIME type matching the actual recorded format (webm, not wav)
+    const mimeType = audioFilePath.endsWith(".webm") ? "audio/webm" : "audio/wav";
     const audioFile = await ai.files.upload({
       file: audioFilePath,
-      mimeType: "audio/wav",
+      mimeType,
     });
     console.log(`[Gemini Processor] Upload completed successfully. URI: ${audioFile.uri}`);
 
@@ -88,13 +90,16 @@ export async function processMeetingAudio(audioFilePath: string, scheduleId: str
     console.log("[Gemini Processor] Uploading recording to Supabase Storage bucket...");
     const meetingId = crypto.randomUUID();
     const fileBuffer = fs.readFileSync(audioFilePath);
-    const fileName = `${meetingId}.wav`;
     const bucketName = "meetings-audio";
+    // FIX #5: Use correct MIME type for storage upload
+    const storageMimeType = audioFilePath.endsWith(".webm") ? "audio/webm" : "audio/wav";
+    const fileExtension = audioFilePath.endsWith(".webm") ? "webm" : "wav";
+    const fileName = `${meetingId}.${fileExtension}`;
 
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from(bucketName)
       .upload(fileName, fileBuffer, {
-        contentType: "audio/wav",
+        contentType: storageMimeType,
         cacheControl: "3600",
         upsert: true
       });
@@ -165,13 +170,7 @@ export async function processMeetingAudio(audioFilePath: string, scheduleId: str
       console.error(`[Gemini Processor] Warning: Failed to update bot schedule: ${updateError.message}`);
     }
 
-    // Cleanup: Delete temporary audio file from worker container disk
-    try {
-      fs.unlinkSync(audioFilePath);
-      console.log(`[Gemini Processor] Cleaned up temporary recording file: ${audioFilePath}`);
-    } catch (cleanupErr) {
-      console.warn(`[Gemini Processor] Warning: Failed to clean up ${audioFilePath}`);
-    }
+    // FIX #6: File cleanup moved to finally block (see below)
 
     return formattedMeeting;
   } catch (error: any) {
@@ -188,5 +187,17 @@ export async function processMeetingAudio(audioFilePath: string, scheduleId: str
       .eq("id", scheduleId);
 
     throw error;
+  } finally {
+    // FIX #6: GUARANTEED cleanup regardless of success or failure.
+    // Without this, failed runs leave temp files on disk indefinitely,
+    // eventually exhausting container disk space and crashing the worker.
+    if (fs.existsSync(audioFilePath)) {
+      try {
+        fs.unlinkSync(audioFilePath);
+        console.log(`[Gemini Processor] Cleaned up temporary recording file: ${audioFilePath}`);
+      } catch (cleanupErr) {
+        console.error(`[Gemini Processor] Warning: Failed to clean up ${audioFilePath}:`, cleanupErr);
+      }
+    }
   }
 }

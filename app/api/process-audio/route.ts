@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import Groq from "groq-sdk";
 import OpenAI from "openai";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { createClient } from "@/lib/supabase/server";
+import { getAuthenticatedUser } from "@/lib/supabase/auth-helper";
+import { rateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 import { z } from "zod";
 import { HfInference } from "@huggingface/inference";
 
@@ -85,11 +86,43 @@ export const maxDuration = 60; // Max allowed serverless timeout on Vercel Hobby
 
 export async function POST(req: NextRequest) {
   try {
-    const supabaseAuth = await createClient();
-    const { data: { user } } = await supabaseAuth.auth.getUser();
+    // --- AUTH (supports both cookie sessions and Bearer tokens for mobile) ---
+    const user = await getAuthenticatedUser(req);
     
     if (!user) {
       return NextResponse.json({ error: "Unauthorized. Please log in to process meetings." }, { status: 401 });
+    }
+
+    // --- RATE LIMITING (Fix #8) ---
+    const rateLimitResult = rateLimit(user.id, RATE_LIMITS.PROCESS_AUDIO);
+    if (!rateLimitResult.allowed) {
+      return NextResponse.json(
+        { error: "Rate limit exceeded. Please wait before processing another recording.", retryAfterMs: rateLimitResult.retryAfterMs },
+        { status: 429 }
+      );
+    }
+
+    // --- TIER ENFORCEMENT (Fix #2) ---
+    const supabaseAdmin = createAdminClient();
+    const { data: sub } = await supabaseAdmin
+      .from("subscriptions")
+      .select("tier")
+      .eq("user_id", user.id)
+      .single();
+
+    if (!sub || sub.tier !== "pro") {
+      // Free tier: enforce 3 meetings limit
+      const { count } = await supabaseAdmin
+        .from("meetings")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", user.id);
+
+      if (count !== null && count >= 3) {
+        return NextResponse.json(
+          { error: "Free tier limit reached (3 meetings). Please upgrade to Pro for unlimited access." },
+          { status: 402 }
+        );
+      }
     }
 
     const formData = await req.formData();

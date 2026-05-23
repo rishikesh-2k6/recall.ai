@@ -55,7 +55,7 @@ const worker = new Worker(
     if (!fs.existsSync(tempDir)) {
       fs.mkdirSync(tempDir, { recursive: true });
     }
-    const audioFilePath = path.join(tempDir, `${scheduleId}.wav`);
+    const audioFilePath = path.join(tempDir, `${scheduleId}.webm`);
 
     try {
       // 2. Launch headless Chromium with media constraints bypassed
@@ -146,6 +146,48 @@ const worker = new Worker(
         console.log(`[Job ${job.id}] Platform: Custom platform. Headless session joined.`);
       }
 
+      // --- LOBBY TIMEOUT CHECK (Fix #10) ---
+      // Wait up to 5 minutes for lobby admission before giving up.
+      // Without this, a denied bot would idle for up to 1 hour consuming resources.
+      const lobbyTimeoutMs = 5 * 60 * 1000;
+      let lobbyElapsed = 0;
+      const lobbyPollInterval = 5000;
+
+      console.log(`[Job ${job.id}] Checking lobby admission status (5 min timeout)...`);
+      while (lobbyElapsed < lobbyTimeoutMs) {
+        // Check if we're past the lobby by looking for meeting-active indicators
+        const inMeeting = await page.evaluate(() => {
+          // Google Meet: participant list or main call view present
+          const meetIndicators = document.querySelectorAll(
+            '[data-participant-id], [data-self-name], [class*="participant"], [data-meeting-title]'
+          );
+          // Also check if "Ask to join" or lobby text is GONE
+          const lobbyText = document.body.innerText;
+          const stillInLobby = lobbyText.includes('Asking to be let in') || 
+                               lobbyText.includes('waiting') ||
+                               lobbyText.includes('Your meeting code');
+          return meetIndicators.length > 0 || !stillInLobby;
+        }).catch(() => false);
+
+        if (inMeeting) {
+          console.log(`[Job ${job.id}] Successfully admitted to meeting.`);
+          break;
+        }
+
+        // Check if page shows an explicit denial/removal
+        const denied = await page.locator('text="You can\'t join this call", text="denied", text="removed"').count().catch(() => 0);
+        if (denied > 0) {
+          throw new Error("Meeting admission was denied by the host.");
+        }
+
+        await page.waitForTimeout(lobbyPollInterval);
+        lobbyElapsed += lobbyPollInterval;
+      }
+
+      if (lobbyElapsed >= lobbyTimeoutMs) {
+        throw new Error("Lobby admission timed out after 5 minutes. Host did not admit the bot.");
+      }
+
       // 3. Update status in DB to "recording"
       console.log(`[Job ${job.id}] Session joined successfully. Setting state to recording.`);
       await updateScheduleStatus(scheduleId, "recording");
@@ -172,14 +214,30 @@ const worker = new Worker(
         // Expose recording capture function
         (window as any).startCapturingAudio = async () => {
           try {
-            // Get browser audio stream constraints
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+            // FIX #4: Try to capture TAB AUDIO via getDisplayMedia first.
+            // This captures what other participants are saying (the actual call audio),
+            // rather than the fake simulated microphone which records silence.
+            let stream: MediaStream;
+            try {
+              // Attempt tab audio capture (requires --auto-select-tab-capture-source-by-title Chromium flag)
+              stream = await navigator.mediaDevices.getDisplayMedia({
+                audio: true,
+                video: false,
+              } as any);
+              console.log("[Playwright Bot] Successfully captured tab audio via getDisplayMedia.");
+            } catch (displayErr) {
+              // Fallback: getUserMedia (will record mic input, which is the fake device stream)
+              console.warn("[Playwright Bot] getDisplayMedia failed, falling back to getUserMedia:", displayErr);
+              stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+            }
+
             const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
             const source = audioContext.createMediaStreamSource(stream);
             const destination = audioContext.createMediaStreamDestination();
             source.connect(destination);
 
-            const mediaRecorder = new MediaRecorder(destination.stream, { mimeType: "audio/webm" });
+            // FIX #5: Use consistent MIME type throughout — record as webm, save as webm
+            const mediaRecorder = new MediaRecorder(destination.stream, { mimeType: "audio/webm;codecs=opus" });
             const chunks: Blob[] = [];
 
             mediaRecorder.ondataavailable = (e) => {
@@ -187,7 +245,8 @@ const worker = new Worker(
             };
 
             mediaRecorder.onstop = async () => {
-              const blob = new Blob(chunks, { type: "audio/wav" });
+              // FIX #5: Blob type matches the actual recorded format (webm, not wav)
+              const blob = new Blob(chunks, { type: "audio/webm" });
               const reader = new FileReader();
               reader.readAsDataURL(blob);
               reader.onloadend = () => {
