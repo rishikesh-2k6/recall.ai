@@ -9,8 +9,8 @@ export function Topbar() {
 
   return (
     <header className="flex items-center justify-between px-6 py-3 border-b border-[var(--border)] bg-[var(--bg2)]/50 backdrop-blur-sm">
-      {/* Left: app name */}
-      <div className="flex items-center gap-3">
+      {/* Left: app name (with left padding on mobile to clear the hamburger button) */}
+      <div className="flex items-center gap-3 pl-12 lg:pl-0">
         <h1
           className="text-lg font-bold text-[var(--text)] tracking-tight"
           style={{ fontFamily: 'var(--font-serif)' }}
